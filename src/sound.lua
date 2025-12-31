@@ -10,6 +10,7 @@ local soundFiles = {
     "what_am_i_supposed_to_do.ogg",
     "why_am_i_walking.ogg",
     "now_we_are_gonna_wait.ogg",
+    "i_worked_at_blizzard_1.ogg",
     -- Add more sound files as needed
 }
 
