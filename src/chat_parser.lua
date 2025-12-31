@@ -63,7 +63,7 @@ for _, cname in ipairs(disbandConsts) do
     end
 end
 
--- Returns the name of the leaver (string) if the message corresponds to "X left the group", otherwise nil
+-- Returns the name of the leaver (string) if the message corresponds to "X has left the group", otherwise nil
 function M.DetectLeaverFromSystem(event, msg, ...)
     if event ~= "CHAT_MSG_SYSTEM" then return end
     if not msg or msg == "" then return end
@@ -75,8 +75,8 @@ function M.DetectLeaverFromSystem(event, msg, ...)
     end
 end
 
--- Détecte si le message indique que le client a quitté ou que le groupe a été dissous.
--- Retourne "self" ou "disband" ou nil.
+-- Detects if the message indicates that the client has left or the group has been disbanded.
+-- Returns "self", "disband", or nil.
 function M.DetectSelfOrDisband(event, msg, ...)
     if event ~= "CHAT_MSG_SYSTEM" then return end
     if not msg or msg == "" then return end
