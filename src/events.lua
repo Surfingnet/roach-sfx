@@ -21,49 +21,13 @@ local function HandleRoaching(roacherName)
     end
 end
 
--- Main event handler - routes events to specific handlers
-function M.OnEvent(event, ...)
-    if event == "PLAYER_ENTERING_WORLD" then
-        M.OnPlayerEnteringWorld()
-    elseif event == "GROUP_ROSTER_UPDATE" then
-        M.OnGroupRosterUpdate()
-    elseif event == "UNIT_SPELLCAST_CHANNEL_START" then
-        M.OnUnitSpellcastChannelStart(...)
-    -- Add more event routing as needed
-    end
-end
-
 -- Specific event handlers
-function M.OnPlayerEnteringWorld()
+local function OnPlayerEnteringWorld()
     -- Handle player entering world
-    ns.roster.InitializeRoster()
-end
-
-function M.OnGroupRosterUpdate()
-    -- Handle roster changes
-    local leftMembers = ns.roster.UpdateRoster()
-    -- Check if we should work outside instances
-    if not ns.instance.IsPlayerInPvEInstance() and not ns.config.Get("enableOutsideInstances") then
-        return
-    end
-    -- Process left members if needed
-    if #leftMembers > 0 then
-        -- Debug: print all leavers regardless of combat
-        if ns.config.Get("debugMode") then
-            for _, name in ipairs(leftMembers) do
-                ns.config.DebugPrint(name .. " left the group")
-            end
-        end
-        
-        if ns.combat.IsAnyGroupMemberInCombat() then
-            local roacherName = leftMembers[1]
-            HandleRoaching(roacherName)
-        end
-    end
 end
 
 ---@diagnostic disable-next-line: unused-local
-function M.OnUnitSpellcastChannelStart(unit, spellName, _spellRank)
+local function OnUnitSpellcastChannelStart(unit, spellName, _spellRank)
     -- Handle teleportation spells cast by group members as potential roaching
     -- if mob then ignore
     if not UnitIsPlayer(unit) then return end
@@ -87,7 +51,57 @@ function M.OnUnitSpellcastChannelStart(unit, spellName, _spellRank)
         return
     end
 
-    HandleRoaching(casterName)
+    if ns.config.Get("debugMode") then
+        ns.config.DebugPrint(casterName .. " started channelling " .. spellName)
+        ns.config.DebugPrint("combat detected: " .. ns.combat.IsAnyGroupMemberInCombat())
+    end
+
+    -- Check if someone is in combat
+    if ns.combat.IsAnyGroupMemberInCombat() then
+        HandleRoaching(casterName)
+    end
+end
+
+local function OnMsgSystem(event, msg, ...)
+    local leaverName = ns.chat_parser.DetectLeaverFromSystem(event, msg, ...)
+    if not leaverName then
+        if ns.chat_parser.DetectSelfOrDisband(event, msg, ...) then
+            ns.history.ClearHistory()
+            -- TODO: deathlog clear?
+        end
+        return
+    end
+
+    -- Debug: print all leavers regardless of combat
+    if ns.config.Get("debugMode") then
+        ns.config.DebugPrint(leaverName .. " left the group")
+    end
+
+    -- Check if we should work outside instances
+    if not ns.instance.IsPlayerInPvEInstance() and not ns.config.Get("enableOutsideInstances") then
+        return
+    end
+
+    if ns.config.Get("debugMode") then
+        ns.config.DebugPrint("combat detected: " .. ns.combat.IsAnyGroupMemberInCombat())
+    end
+
+    -- Check if someone is in combat
+    if ns.combat.IsAnyGroupMemberInCombat() then
+        HandleRoaching(leaverName)
+    end
+end
+
+-- Main event handler - routes events to specific handlers
+function M.OnEvent(event, ...)
+    if event == "PLAYER_ENTERING_WORLD" then
+        OnPlayerEnteringWorld()
+    elseif event == "UNIT_SPELLCAST_CHANNEL_START" then
+        OnUnitSpellcastChannelStart(...)
+    elseif event == "CHAT_MSG_SYSTEM" then
+        OnMsgSystem(event, ...)
+    -- Add more event routing as needed
+    end
 end
 
 ns.events = M

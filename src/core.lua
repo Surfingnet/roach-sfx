@@ -14,11 +14,11 @@ end)
 ns.frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 ns.frame:RegisterEvent("GROUP_ROSTER_UPDATE")
 ns.frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START")
+ns.frame:RegisterEvent("CHAT_MSG_SYSTEM")
 --ns.frame:RegisterEvent("UNIT_HEALTH_FREQUENT")
 --ns.frame:RegisterEvent("UNIT_DIED")
 -- Add other events as needed
 
 -- Initialize other modules
-ns.roster.InitializeRoster()
 ns.config.Initialize()
 ns.config.RegisterOptions()

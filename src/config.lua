@@ -7,7 +7,7 @@ local M = ns.config
 -- Default settings
 local defaults = {
     soundChannel = "SFX",          -- Sound channel: "Master", "SFX", "Music", "Ambience", "Dialog"
-    cooldownTime = 3,              -- Minimum time between sounds (seconds)
+    cooldownTime = 5,              -- Minimum time between sounds (seconds)
     enableOutsideInstances = false, -- Whether to work outside PvE instances
     showRaidWarnings = true,       -- Whether to show raid warning messages
     enableSounds = true,           -- Whether to play roach sounds

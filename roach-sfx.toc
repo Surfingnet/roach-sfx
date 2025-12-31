@@ -16,3 +16,4 @@ src/message.lua
 src/spells.lua
 src/history.lua
 src/hardcore.lua
+src/chat_parser.lua
