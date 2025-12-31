@@ -1,0 +1,121 @@
+-- src/spells.lua
+local addonName, ns = ...
+ns = ns or {}
+ns.spells = ns.spells or {}
+local M = ns.spells
+
+
+-- local teleportationSpellIDs = {
+--     [8690] = true, --   Hearthstone DONE
+--     [556] = true, --    Astral Recall DONE
+--     [18960] = true, --  Teleport: Moonglade DONE
+--     [3561] = true, --   Teleport: Stormwind DONE
+--     [3562] = true, --   Teleport: Ironforge DONE
+--     [3563] = true, --   Teleport: Undercity DONE
+--     [3565] = true, --   Teleport: Darnassus DONE
+--     [3566] = true, --   Teleport: Thunder Bluff DONE
+--     [3567] = true, --   Teleport: Orgrimmar DONE
+--     [23453] = true, --  Gnomish Transporter DONE
+-- }
+
+local teleportationSpellNames = {
+    ["Ruhestein"] = true,
+    ["Hearthstone"] = true,
+    ["Descorazonado"] = true,
+    ["Piedra de hogar"] = true,
+    ["Pierre de foyer"] = true,
+    ["Pedra de Regresso"] = true,
+    ["Камень возвращения"] = true,
+    ["귀환석"] = true,
+    ["炉石"] = true,
+    ["爐石"] = true,
+    ["Astraler Rückruf"] = true,
+    ["Astral Recall"] = true,
+    ["Viaje astral"] = true,
+    ["Regreso astral"] = true,
+    ["Rappel astral"] = true,
+    ["Revocação Astral"] = true,
+    ["Астральное возвращение"] = true,
+    ["영혼의 귀환"] = true,
+    ["星界传送"] = true,
+    ["星界傳送"] = true,
+    ["Teleportieren: Moonglade"] = true,
+    ["Teleport: Moonglade"] = true,
+    ["Teletransporte a: Claro de la Luna"] = true,
+    ["Téléportation : Reflet-de-Lune"] = true,
+    ["Teleporte: Clareira da Lua"] = true,
+    ["Телепортация: Лунная поляна"] = true,
+    ["순간이동: 달의 숲"] = true,
+    ["传送：月光林地"] = true,
+    ["傳送：月光林地"] = true,
+    ["Teleportieren: Stormwind"] = true,
+    ["Teleport: Stormwind"] = true,
+    ["Teletransporte a: Ventormenta"] = true,
+    ["Téléportation : Stormwind"] = true,
+    ["Teleporte: Ventobravo"] = true,
+    ["Телепортация: Штормград"] = true,
+    ["순간이동: 스톰윈드"] = true,
+    ["传送：暴风城"] = true,
+    ["傳送：暴風城"] = true,
+    ["Teleport: Ironforge"] = true,
+    ["Teletransporte a: Forjaz"] = true,
+    ["Téléportation : Ironforge"] = true,
+    ["Teleporte: Altaforja"] = true,
+    ["Телепортация: Стальгорн"] = true,
+    ["순간이동: 아이언포지"] = true,
+    ["传送：铁炉堡"] = true,
+    ["傳送：鐵爐堡"] = true,
+    ["Teleportieren: Undercity"] = true,
+    ["Teleport: Undercity"] = true,
+    ["Teletransporte a: Entrañas"] = true,
+    ["Téléportation : Undercity"] = true,
+    ["Teleporte: Cidade Baixa"] = true,
+    ["Телепортация:Подгород"] = true,
+    ["순간이동: 언더시티"] = true,
+    ["传送：幽暗城"] = true,
+    ["傳送：幽暗城"] = true,
+    ["Teleportieren: Darnassus"] = true,
+    ["Teleport: Darnassus"] = true,
+    ["Teletransporte a Darnassus"] = true,
+    ["Teletransporte a: Darnassus"] = true,
+    ["Téléportation : Darnassus"] = true,
+    ["Teleporte: Darnassus"] = true,
+    ["Телепортация в Дарнасс"] = true,
+    ["순간이동: 다르나서스"] = true,
+    ["传送：达纳苏斯"] = true,
+    ["傳送：達納蘇斯"] = true,
+    ["Teleportieren: Thunder Bluff"] = true,
+    ["Teleport: Thunder Bluff"] = true,
+    ["Teletransporte a: Cima del Trueno"] = true,
+    ["Téléportation : Thunder Bluff"] = true,
+    ["Teleporte: Penhasco do Trovão"] = true,
+    ["Телепортация: Громовой Утес"] = true,
+    ["순간이동: 썬더 블러프"] = true,
+    ["传送：雷霆崖"] = true,
+    ["傳送：雷霆崖"] = true,
+    ["Teleportieren: Orgrimmar"] = true,
+    ["Teleport: Orgrimmar"] = true,
+    ["Teletransporte a: Orgrimmar"] = true,
+    ["Téléportation : Orgrimmar"] = true,
+    ["Teleporte: Orgrimmar"] = true,
+    ["Телепортация: Оргриммар"] = true,
+    ["순간이동: 오그리마"] = true,
+    ["传送：奥格瑞玛"] = true,
+    ["傳送：奧格瑪"] = true,
+    ["Gnomischer Transporter"] = true,
+    ["Gnomish Transporter"] = true,
+    ["Transportdor gnomo"] = true,
+    ["Transportador gnómico"] = true,
+    ["Transporteur gnome"] = true,
+    ["Transportador Gnômico"] = true,
+    ["Гномский транспортер"] = true,
+    ["노움 순간이동기"] = true,
+    ["侏儒传送器"] = true,
+    ["地精傳送器"] = true,
+}
+---Returns true if the given spell name is a teleportation spell.
+function M.isTeleportationSpell(name)
+    return name and teleportationSpellNames[name] or false
+end
+
+ns.spells = M
