@@ -27,14 +27,11 @@ jobs:
         run: |
           set -e
 
-          # Ensure TOC file exists
           if [ ! -f "roach-sfx.toc" ]; then
             echo "changed=false" >> $GITHUB_OUTPUT
             exit 0
           fi
 
-          # Extract the version from the line beginning with "## Version: "
-          # Example line: "## Version: 1.6.1-beta"
           version=$(awk -F': ' '/^## Version: / {print $2; exit}' roach-sfx.toc | tr -d '\r')
           if [ -z "$version" ]; then
             echo "changed=false" >> $GITHUB_OUTPUT
@@ -43,7 +40,6 @@ jobs:
 
           tag="v$version"
 
-          # Determine channel and prerelease flag based on version contents
           lc_version=$(printf "%s" "$version" | tr '[:upper:]' '[:lower:]')
           channel="stable"
           prerelease="false"
@@ -56,21 +52,18 @@ jobs:
             prerelease="true"
           fi
 
-          # Map to CurseForge release_type: stable -> release
           if [ "$channel" = "stable" ]; then
             cf_release_type="release"
           else
             cf_release_type="$channel"
           fi
 
-          # Expose outputs for later steps using environment files
           echo "toc_version=$version" >> $GITHUB_OUTPUT
           echo "tag_name=$tag" >> $GITHUB_OUTPUT
           echo "channel=$channel" >> $GITHUB_OUTPUT
           echo "prerelease=$prerelease" >> $GITHUB_OUTPUT
           echo "cf_release_type=$cf_release_type" >> $GITHUB_OUTPUT
 
-          # Check whether tag already exists
           git fetch --tags
           if git rev-parse --verify "refs/tags/$tag" >/dev/null 2>&1; then
             echo "changed=false" >> $GITHUB_OUTPUT
@@ -81,11 +74,8 @@ jobs:
       - name: Create annotated git tag
         if: steps.extract.outputs.changed == 'true'
         run: |
-          # Configure a git identity for the action
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          # Create and push annotated tag based on TOC version
           git tag -a "${{ steps.extract.outputs.tag_name }}" -m "Release ${{ steps.extract.outputs.toc_version }}"
           git push origin "${{ steps.extract.outputs.tag_name }}"
 
@@ -93,22 +83,13 @@ jobs:
         if: steps.extract.outputs.changed == 'true'
         run: |
           set -e
-          # Remove any previous package folder
           rm -rf package || true
-
-          # Create exact addon folder name inside package
           mkdir -p package/roach-sfx
-
-          # Copy only the required files/folders
           cp roach-sfx.toc package/roach-sfx/
           cp -r src package/roach-sfx/
           cp -r sounds package/roach-sfx/
-
-          # Ensure no extra files slipped in
           rm -rf package/roach-sfx/.github || true
           rm -rf package/roach-sfx/pic* || true
-
-          # Create zip file named with version, but containing a root folder named "roach-sfx"
           cd package
           zip -r "../roach-sfx-${{ steps.extract.outputs.toc_version }}.zip" "roach-sfx"
 
@@ -118,7 +99,7 @@ jobs:
           ls -l roach-sfx-${{ steps.extract.outputs.toc_version }}.zip || true
           unzip -l roach-sfx-${{ steps.extract.outputs.toc_version }}.zip || true
 
-      - name: Create GitHub release and upload zip (no set-output warnings)
+      - name: Create GitHub release and upload zip
         if: steps.extract.outputs.changed == 'true'
         uses: softprops/action-gh-release@v2
         with:
@@ -130,43 +111,54 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Resolve CurseForge game version ID for Classic
+      - name: Resolve CurseForge game version type id for Classic
         if: steps.extract.outputs.changed == 'true'
         id: resolve_cf_game_version
         env:
           CF_TOKEN: ${{ secrets.CF_API_TOKEN }}
         run: |
-          set -e
-          endpoint="wow"
-          token="$CF_TOKEN"
+          set -euo pipefail
 
-          # Query CurseForge game versions for the given endpoint.
-          # This avoids ambiguous name matching and selects the first entry whose
-          # name contains "Classic" or whose slug equals "classic".
-          resp=$(curl -sS "https://${endpoint}.curseforge.com/api/game/versions?token=${token}")
+          # Use site-specific API endpoint as per itsmeow README:
+          # https://<endpoint>.curseforge.com/api/game/version-types?token=...
+          endpoint="wow"
+          token="${CF_TOKEN}"
+
+          url="https://${endpoint}.curseforge.com/api/game/version-types?token=${token}"
+          echo "Fetching game version types from: $url"
+
+          resp=$(curl -sS "$url" || true)
+
           if [ -z "$resp" ]; then
-            echo "Failed to fetch game versions from CurseForge" >&2
+            echo "Failed to fetch version-types or empty response" >&2
+            echo "game_version_id=" >> $GITHUB_OUTPUT
             exit 1
           fi
 
-          # Parse JSON and pick the best match (name contains "Classic" OR slug == "classic")
-          cf_id=$(printf '%s' "$resp" | python - <<'PY'
+          # Parse JSON safely and find an id for Classic (slug=='classic' or name contains 'classic')
+          cf_id=$(printf '%s' "$resp" | python3 - <<'PY'
           import sys, json
-          data = json.load(sys.stdin)
-          # Prefer exact slug match first
-          for v in data:
-            if v.get('slug','').lower() == 'classic':
-              print(v.get('id'))
+          try:
+            data = json.load(sys.stdin)
+          except Exception:
+            sys.exit(0)
+          # data expected to be a list of { id, name, slug, ... } or similar
+          for item in data:
+            name = str(item.get('name','')).lower()
+            slug = str(item.get('slug','')).lower()
+            if slug == 'classic' or 'classic' in name:
+              print(item.get('id',''))
               sys.exit(0)
-          # Then prefer name containing 'Classic'
-          for v in data:
-            if 'classic' in v.get('name','').lower():
-              print(v.get('id'))
+          # fallback: try to find entries containing 'classic' anywhere
+          for item in data:
+            if 'classic' in str(item).lower():
+              print(item.get('id',''))
               sys.exit(0)
-          # Fallback: print empty
-          print('')
+          # nothing found
+          sys.exit(0)
           PY
           )
+
           if [ -z "$cf_id" ]; then
             echo "Could not resolve a CurseForge game version id for 'Classic' on endpoint ${endpoint}" >&2
             echo "game_version_id=" >> $GITHUB_OUTPUT
@@ -174,6 +166,7 @@ jobs:
           fi
 
           echo "game_version_id=$cf_id" >> $GITHUB_OUTPUT
+          echo "Resolved CurseForge game version id: $cf_id"
 
       - name: Upload package to CurseForge (use numeric game version id)
         if: steps.extract.outputs.changed == 'true'
@@ -182,7 +175,7 @@ jobs:
           file_path: "roach-sfx-${{ steps.extract.outputs.toc_version }}.zip"
           project_id: "1417993"
           game_endpoint: "wow"
-          # Use the resolved numeric game version id to ensure Classic (avoid ambiguous names)
+          # Use the resolved numeric game version id to ensure Classic
           game_versions: ${{ steps.resolve_cf_game_version.outputs.game_version_id }}
           release_type: ${{ steps.extract.outputs.cf_release_type }}
           display_name: "roach-sfx ${{ steps.extract.outputs.toc_version }}"
