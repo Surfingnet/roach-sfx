@@ -46,3 +46,7 @@ function M.IsGUIDInGroup(guid)
 end
 
 ns.roster = M
+
+if ns.config.Get("debugMode") then
+    ns.config.DebugPrint("Roster module loaded.")
+end

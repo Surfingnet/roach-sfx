@@ -54,3 +54,7 @@ function M.ShowRoachWarning(name)
 end
 
 ns.message = M
+
+if ns.config.Get("debugMode") then
+    ns.config.DebugPrint("Message module loaded.")
+end

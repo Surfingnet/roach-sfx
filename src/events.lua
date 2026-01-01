@@ -67,7 +67,7 @@ local function OnMsgSystem(event, msg, ...)
     if not leaverName then
         if ns.chat_parser.DetectSelfOrDisband(event, msg, ...) then
             ns.history.ClearHistory()
-            if ns.hardcore.IsHardcoreRealm() then
+            if ns.config.Get("hardcore") then
                 ns.hardcore.clearDeathLog()
             end
         end
@@ -93,7 +93,7 @@ local function OnMsgSystem(event, msg, ...)
         return
     end
 
-    if ns.hardcore.IsHardcoreRealm() and ns.hardcore.IsInDeathLog(leaverName) then
+    if ns.config.Get("hardcore") and ns.hardcore.IsInDeathLog(leaverName) then
         return
     end
 
@@ -102,7 +102,7 @@ end
 
 -- Handler for UNIT_HEALTH_FREQUENT to detect deaths in Hardcore realms
 local function OnUnitHealthFrequent(unit)
-    --if not ns.hardcore.IsHardcoreRealm() then return end
+    --if not ns.config.Get("hardcore") then return end
     if not unit or not ns.roster.IsUnitInGroup(unit) then return end
     if not UnitExists(unit) then return end
     if not (UnitIsDeadOrGhost(unit) or UnitHealth(unit) <= 0) then
@@ -143,7 +143,7 @@ end
 
 -- Disable death detection handlers if not in a Hardcore realm
 -- (leaving group when dead on non-hardcore is roaching if the fight goes on!)
-if not ns.hardcore.IsHardcoreRealm() then
+if not ns.config.Get("hardcore") then
     OnCombatLogEventUnfiltered = function() end
     OnUnitHealthFrequent = function() end
 end
@@ -164,4 +164,9 @@ function M.OnEvent(event, ...)
     -- Add more event routing as needed
 end
 
+M.ready = true
 ns.events = M
+
+if ns.config.Get("debugMode") then
+    ns.config.DebugPrint("Events module loaded.")
+end

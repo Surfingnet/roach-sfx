@@ -48,3 +48,7 @@ function M.PlayRandomRoachSound()
 end
 
 ns.sound = M
+
+if ns.config.Get("debugMode") then
+    ns.config.DebugPrint("Sound module loaded.")
+end

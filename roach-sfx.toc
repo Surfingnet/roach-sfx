@@ -1,19 +1,19 @@
 ## Interface: 11403
 ## Title: roach SFX
-## Version: 1.2-alpha
+## Version: 1.4-alpha
 ## Author: Surfingnet
 ## Notes: Plays a sound when somebody roaches out
 ## SavedVariables: RoachSFXDB
 
-src/core.lua
 src/config.lua
 src/combat.lua
-src/events.lua
 src/instance.lua
+src/spells.lua
+src/chat_parser.lua
 src/roster.lua
+src/hardcore.lua
 src/sound.lua
 src/message.lua
-src/spells.lua
 src/history.lua
-src/hardcore.lua
-src/chat_parser.lua
+src/events.lua
+src/core.lua

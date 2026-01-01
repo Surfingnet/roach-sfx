@@ -15,3 +15,7 @@ function M.IsPlayerInPvEInstance()
 end
 
 ns.instance = M
+
+if ns.config.Get("debugMode") then
+    ns.config.DebugPrint("Instance module loaded.")
+end

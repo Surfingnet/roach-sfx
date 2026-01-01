@@ -35,3 +35,7 @@ function M.clearHistory()
 end
 
 ns.history = M
+
+if ns.config.Get("debugMode") then
+    ns.config.DebugPrint("History module loaded.")
+end

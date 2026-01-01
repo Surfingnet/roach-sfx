@@ -44,3 +44,7 @@ function M.IsAnyGroupMemberInCombat()
 end
 
 ns.combat = M
+
+if ns.config.Get("debugMode") then
+    ns.config.DebugPrint("Combat module loaded.")
+end

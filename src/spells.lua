@@ -119,3 +119,7 @@ function M.isTeleportationSpell(name)
 end
 
 ns.spells = M
+
+if ns.config.Get("debugMode") then
+    ns.config.DebugPrint("Spells module loaded.")
+end
