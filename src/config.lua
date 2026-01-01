@@ -7,7 +7,7 @@ local M = ns.config
 -- Setup default values if not already present
 local defaults = {
     soundChannel = 1, -- 1=Master, 2=SFX, 3=Music, 4=Ambience, 5=Dialog
-    cooldownTime = 5, -- Default cooldown between sounds (seconds)
+    cooldownTime = 2, -- Default cooldown between sounds (seconds)
     enableOutsideInstances = false,
     showRaidWarnings = false,
     enableSounds = true,
@@ -231,18 +231,22 @@ local function BuildSettingsCategory()
         local tooltip = "DANGER!!!!!"
         local defaultValue = false
 
+        local funnyButtonState = false
+
         -- GetValue always returns false so the control never stores state.
         local function GetValue()
-            return false
+            return funnyButtonState
         end
 
         -- SetValue is called when the user toggles the checkbox.
         -- We run the demo action if present. No persistent storage.
         local function SetValue(value)
+            funnyButtonState = value
             if value then
                 M.DebugPrint("Funny button clicked. Hooray!")
                 ns.sound.PlayFunnySoundIn()
             else
+                -- should play on unticking but does not...
                 M.DebugPrint("Funny button unclicked...")
                 ns.sound.PlayFunnySoundOut()
             end
