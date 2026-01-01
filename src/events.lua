@@ -7,7 +7,6 @@ local M = ns.events
 -- Local helper function to handle roaching for a specific player
 local function HandleRoaching(roacherName)
     ns.config.DebugPrint(roacherName .. " is roaching out!")
-
     -- Check if the roacher has roached recently
     if ns.history.IsInHistory(roacherName) then
         return
@@ -16,11 +15,8 @@ local function HandleRoaching(roacherName)
     ns.history.AddToHistory(roacherName)
     -- Play a random roach sound
     ns.sound.PlayRandomRoachSound()
-
     -- Display raid warning locally with the roacher's name
-    if ns.config.Get("showRaidWarnings") then
-        ns.message.ShowRoachWarning(roacherName)
-    end
+    ns.message.ShowRoachWarning(roacherName)
 end
 
 -- Specific event handlers
