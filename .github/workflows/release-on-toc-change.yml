@@ -3,7 +3,7 @@ name: Auto release when TOC version changes
 on:
   push:
     branches:
-      - main  # change this if your default branch is not "main"
+      - main
 
 permissions:
   contents: write
@@ -111,102 +111,23 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Resolve CurseForge game version IDs for Classic (robust)
-        if: steps.extract.outputs.changed == 'true'
-        id: resolve_cf_game_versions
-        env:
-          CF_TOKEN: ${{ secrets.CF_API_TOKEN }}
-        run: |
-          set -euo pipefail
-
-          endpoint="wow"
-          token="${CF_TOKEN}"
-          url="https://${endpoint}.curseforge.com/api/game/versions?token=${token}"
-
-          echo "Requesting: $url"
-
-          tmpfile="$(mktemp)"
-          http_code="$(curl -sS -w '%{http_code}' -o "$tmpfile" "$url" || true)"
-
-          if [ "$http_code" != "200" ]; then
-            echo "CurseForge request failed (HTTP $http_code). Response (first 4000 chars):"
-            head -c 4000 "$tmpfile" || true
-            rm -f "$tmpfile" || true
-            echo "game_versions_ids=" >> $GITHUB_OUTPUT
-            exit 1
-          fi
-
-          if [ ! -s "$tmpfile" ]; then
-            echo "Empty response from CurseForge versions endpoint." >&2
-            rm -f "$tmpfile" || true
-            echo "game_versions_ids=" >> $GITHUB_OUTPUT
-            exit 1
-          fi
-
-          # Parse JSON safely and collect IDs whose name/slug indicates Classic/Era/Hardcore
-          ids="$(python3 - "$tmpfile" <<'PY'
-          import sys, json
-          fp = sys.argv[1]
-          try:
-            with open(fp, 'r', encoding='utf-8') as f:
-              data = json.load(f)
-          except Exception:
-            sys.exit(0)
-
-          # data may be a list or a dict containing 'data' or 'results'
-          if isinstance(data, dict):
-            candidates = data.get('data') or data.get('results') or data.get('versions') or []
-          elif isinstance(data, list):
-            candidates = data
-          else:
-            candidates = []
-
-          found = []
-          for item in candidates:
-            try:
-              name = str(item.get('name','') or '').lower()
-              slug = str(item.get('slug','') or '').lower()
-              if slug == 'classic' or 'classic' in name or 'era' in name or 'hardcore' in name:
-                vid = item.get('id')
-                if vid is not None:
-                  found.append(str(vid))
-            except Exception:
-              continue
-
-          # Deduplicate while preserving order
-          seen = set()
-          out = []
-          for x in found:
-            if x not in seen:
-              seen.add(x)
-              out.append(x)
-
-          if out:
-            print(','.join(out))
-          sys.exit(0)
-          PY
-          )"
-
-          rm -f "$tmpfile" || true
-
-          if [ -z "$ids" ]; then
-            echo "Could not resolve any CurseForge game version ids for 'Classic' on endpoint ${endpoint}" >&2
-            echo "game_versions_ids=" >> $GITHUB_OUTPUT
-            exit 1
-          fi
-
-          echo "game_versions_ids=$ids" >> $GITHUB_OUTPUT
-          echo "Resolved CurseForge game version ids: $ids"
-
-      - name: Upload package to CurseForge (use numeric game version ids)
+      - name: Upload package to CurseForge (convenience-name matching for Classic)
         if: steps.extract.outputs.changed == 'true'
         uses: itsmeow/curseforge-upload@v3.1.2
         with:
           file_path: "roach-sfx-${{ steps.extract.outputs.toc_version }}.zip"
           project_id: "1417993"
           game_endpoint: "wow"
-          # Pass numeric IDs resolved above (comma separated)
-          game_versions: ${{ steps.resolve_cf_game_versions.outputs.game_versions_ids }}
+          # Provide several human-friendly names/slugs that the action will map to numeric IDs.
+          # The action will attempt to resolve these to the correct numeric game version IDs internally.
+          # Order: most specific first.
+          game_versions: >
+            Classic,
+            WoW Classic,
+            Classic Era,
+            Hardcore,
+            Classic + Era,
+            Classic (Era)
           release_type: ${{ steps.extract.outputs.cf_release_type }}
           display_name: "roach-sfx ${{ steps.extract.outputs.toc_version }}"
           changelog: "See GitHub release ${{ steps.extract.outputs.tag_name }}"
