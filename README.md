@@ -16,7 +16,7 @@
 
 # Known issues
 
-- None so far.
+- When the party is disbanded, the leader name isn't remembered yet, and a placeholder is used instead.
 
 # Planned
 
