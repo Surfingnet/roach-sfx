@@ -1,24 +1,23 @@
-# Description: Roach SFX, the coward detector.
+# Description: Roach SFX, the coward detector
 
-- If a player of the group (party/raid) leaves the group or starts using a teleportation spell, when at least one player from the group is in combat, then you will be notified of them roaching out with a funny sound or raid warning style message, or both.
-- You choose weither to look for roaches everywhere or only in PVE instances. (dungeons/raid)
+- If a player in your group (party or raid) leaves the group or starts using a teleportation spell while at least one group member is in combat, you will be notified that they are roaching out, via a funny sound, a raid warning-style message, or both.
+- You can choose whether to detect roaches everywhere or only in PvE instances (dungeons and raids).
 
-# Limitations: The WoW API and some code can't do everything.
+# Limitations: The WoW API and some technical constraints
 
-- There is no heuristic detection regarding the intention behind the use of a spell. Therefor, Stealth or Fein Death and such spells are not taken into account.
-- The API does not allow the code to differenciate a player who leaves the group from a player who's been kicked out or disconnected, so they all trigger the roach detector.
-- For hardcore players, anyone who disconnects while dead will not trigger detection.
+- There is no heuristic detection of a player's intent when using a spell. Therefore, spells such as Stealth or Feign Death are not taken into account.
+- The API does not allow the code to differentiate between a player who leaves the group voluntarily and a player who is kicked, so both will trigger the roach detector.
+- For hardcore players, anyone who disconnects while dead will not trigger detection, unless it is an exceptional case where the Blizzard API fails to properly report the death to the client.
 
-# Note: Tell me what you think.
+# Note: Tell me what you think
 
-- If you have a good idea for a funny message or sound, leave a message on Curseforge.
-- If something isn't right, open an issue on Github.
+- If you have a good idea for a funny message or sound, leave a comment on CurseForge.
+- If something is not working correctly, open an issue on GitHub.
 
-# Known issues:
+# Known issues
 
-- If a player A is not in the instance yet, and a player B in the instance tries to roach out, player A may be mentionned as roaching in the message. I'm working on this.
+- None so far.
 
-# Planned:
+# Planned
 
-- Bug fixing
-- Cooldown for raid warning type message.
+- Bug fixes if needed.
