@@ -5,18 +5,18 @@ ns.spells = ns.spells or {}
 local M = ns.spells
 
 
--- local teleportationSpellIDs = {
---     [8690] = true, --   Hearthstone DONE
---     [556] = true, --    Astral Recall DONE
---     [18960] = true, --  Teleport: Moonglade DONE
---     [3561] = true, --   Teleport: Stormwind DONE
---     [3562] = true, --   Teleport: Ironforge DONE
---     [3563] = true, --   Teleport: Undercity DONE
---     [3565] = true, --   Teleport: Darnassus DONE
---     [3566] = true, --   Teleport: Thunder Bluff DONE
---     [3567] = true, --   Teleport: Orgrimmar DONE
---     [23453] = true, --  Gnomish Transporter DONE
--- }
+local teleportationSpellIDs = {
+    [8690] = true,  --  Hearthstone DONE
+    [556] = true,   --  Astral Recall DONE
+    [18960] = true, --  Teleport: Moonglade DONE
+    [3561] = true,  --  Teleport: Stormwind DONE
+    [3562] = true,  --  Teleport: Ironforge DONE
+    [3563] = true,  --  Teleport: Undercity DONE
+    [3565] = true,  --  Teleport: Darnassus DONE
+    [3566] = true,  --  Teleport: Thunder Bluff DONE
+    [3567] = true,  --  Teleport: Orgrimmar DONE
+    [23453] = true, --  Gnomish Transporter DONE
+}
 
 local teleportationSpellNames = {
     ["Ruhestein"] = true,
@@ -114,8 +114,8 @@ local teleportationSpellNames = {
     ["地精傳送器"] = true,
 }
 ---Returns true if the given spell name is a teleportation spell.
-function M.isTeleportationSpell(name)
-    return name and teleportationSpellNames[name] or false
+function M.isTeleportationSpell(spellID)
+    return spellID and teleportationSpellIDs[spellID] or false
 end
 
 ns.spells = M

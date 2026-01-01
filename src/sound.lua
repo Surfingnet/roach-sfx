@@ -4,6 +4,14 @@ ns = ns or {}
 ns.sound = ns.sound or {}
 local M = ns.sound
 
+local channels = {
+    "Master",
+    "SFX",
+    "Music",
+    "Ambience",
+    "Dialog"
+}
+
 -- List of available sound files (add new .ogg files here)
 local soundFiles = {
     "do_you_see_my_mana.ogg",
@@ -16,8 +24,11 @@ local soundFiles = {
 
 local soundFilesCt = #soundFiles
 
+-- to avoid repeating
+local lastPlayedIndex = 0
+
 -- Cooldown tracking
-local lastPlayed = 0
+local lastPlayedTime = 0
 
 -- Play a random roach sound
 function M.PlayRandomRoachSound()
@@ -29,22 +40,27 @@ function M.PlayRandomRoachSound()
     -- Check cooldown to prevent spam
     local currentTime = GetTime()
     local cooldown = ns.config.Get("cooldownTime") or 3
-    if currentTime - lastPlayed < cooldown then
+    if currentTime - lastPlayedTime < cooldown then
         return -- Still on cooldown
     end
 
     local randomIndex = fastrandom(soundFilesCt)
+
+    while (randomIndex == lastPlayedIndex) do
+        randomIndex = fastrandom(soundFilesCt)
+    end
+
     local soundFile = soundFiles[randomIndex]
     local soundPath = "Interface\\AddOns\\roach-sfx\\sounds\\" .. soundFile
 
     -- Get sound channel from config
-    local channel = ns.config.Get("soundChannel") or "SFX"
+    local channel = channels[ns.config.Get("soundChannel")]
 
     -- Play the sound
     PlaySoundFile(soundPath, channel)
 
     -- Update last played time
-    lastPlayed = currentTime
+    lastPlayedTime = currentTime
 end
 
 ns.sound = M

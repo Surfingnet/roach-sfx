@@ -6,6 +6,8 @@ local M = ns.events
 
 -- Local helper function to handle roaching for a specific player
 local function HandleRoaching(roacherName)
+    ns.config.DebugPrint(roacherName .. " is roaching out!")
+
     -- Check if the roacher has roached recently
     if ns.history.IsInHistory(roacherName) then
         return
@@ -27,10 +29,12 @@ local function OnPlayerEnteringWorld()
 end
 
 ---@diagnostic disable-next-line: unused-local
-local function OnUnitSpellcastChannelStart(unit, spellName, _spellRank)
+local function OnUnitSpellcastChannelStart(unitTarget, _castGUID, spellID)
+    ns.config.DebugPrint(unitTarget .. " " .. tostring(spellID))
+
     -- Handle teleportation spells cast by group members as potential roaching
     -- if mob then ignore
-    if not UnitIsPlayer(unit) then return end
+    if not UnitIsPlayer(unitTarget) then return end
 
     -- Check if we should work outside instances
     if not ns.instance.IsPlayerInPvEInstance() and not ns.config.Get("enableOutsideInstances") then
@@ -38,27 +42,25 @@ local function OnUnitSpellcastChannelStart(unit, spellName, _spellRank)
     end
 
     -- if not in group then ignore
-    local casterName = UnitName(unit)
-    if not ns.roster.IsUnitInGroup(unit) then
+    if not ns.roster.IsUnitInGroup(unitTarget) then
         -- unless it is the player and allowPlayer is true
-        if not (unit == "player" and ns.config.Get("allowPlayer")) then
+        if not (unitTarget == "player" and ns.config.Get("allowPlayer")) then
             return
         end
     end
 
     -- Check if it's a teleportation spell
-    if not ns.spells.isTeleportationSpell(spellName) then
+    if not ns.spells.isTeleportationSpell(spellID) then
         return
-    end
-
-    if ns.config.Get("debugMode") then
-        ns.config.DebugPrint(casterName .. " started channelling " .. spellName)
-        ns.config.DebugPrint("combat detected: " .. ns.combat.IsAnyGroupMemberInCombat())
     end
 
     -- Check if someone is in combat
     if ns.combat.IsAnyGroupMemberInCombat() then
+        ns.config.DebugPrint("combat detected")
+        local casterName = UnitName(unitTarget)
         HandleRoaching(casterName)
+    else
+        ns.config.DebugPrint("combat not detected")
     end
 end
 
@@ -75,25 +77,23 @@ local function OnMsgSystem(event, msg, ...)
     end
 
     -- Debug: print all leavers regardless of combat
-    if ns.config.Get("debugMode") then
-        ns.config.DebugPrint(leaverName .. " left the group")
-    end
+    ns.config.DebugPrint(leaverName .. " left the group")
 
     -- Check if we should work outside instances
     if not ns.instance.IsPlayerInPvEInstance() and not ns.config.Get("enableOutsideInstances") then
         return
     end
 
-    if ns.config.Get("debugMode") then
-        ns.config.DebugPrint("combat detected: " .. ns.combat.IsAnyGroupMemberInCombat())
-    end
-
     -- Check if someone is in combat
     if not ns.combat.IsAnyGroupMemberInCombat() then
+        ns.config.DebugPrint("combat not detected")
         return
+    else
+        ns.config.DebugPrint("combat detected")
     end
 
     if ns.config.Get("hardcore") and ns.hardcore.IsInDeathLog(leaverName) then
+        ns.config.DebugPrint("he's dead anyway")
         return
     end
 
@@ -150,11 +150,15 @@ end
 
 -- Main event handler - routes events to specific handlers
 function M.OnEvent(event, ...)
+    ns.config.DebugPrint("Event received: " .. event)
+
     if event == "COMBAT_LOG_EVENT_UNFILTERED" then
         OnCombatLogEventUnfiltered()
     elseif event == "UNIT_HEALTH_FREQUENT" then
         OnUnitHealthFrequent(...)
     elseif event == "UNIT_SPELLCAST_CHANNEL_START" then
+        OnUnitSpellcastChannelStart(...)
+    elseif event == "UNIT_SPELLCAST_START" then
         OnUnitSpellcastChannelStart(...)
     elseif event == "CHAT_MSG_SYSTEM" then
         OnMsgSystem(event, ...)

@@ -9,12 +9,12 @@ local defaults = {
     soundChannel = 1, -- 1=Master, 2=SFX, 3=Music, 4=Ambience, 5=Dialog
     cooldownTime = 5, -- Default cooldown between sounds (seconds)
     enableOutsideInstances = false,
-    showRaidWarnings = true,
+    showRaidWarnings = false,
     enableSounds = true,
     allowPlayer = true,
     stripServer = true,
     hardcore = false,
-    debugMode = true,
+    debugMode = false,
 }
 
 -- Get setting value from SavedVariables (kept for other modules)
@@ -186,10 +186,41 @@ local function BuildSettingsCategory()
     do
         local variable = "debugMode"
         local name = "Debug Mode"
-        local tooltip = "Enable debug messages."
+        local tooltip = "Spam your chat. Why not?"
         local defaultValue = RoachSFXDB.debugMode
 
         local setting = RegisterSimpleSetting(category, variable, name, type(defaultValue), defaultValue)
+        Settings.CreateCheckbox(category, setting, tooltip)
+    end
+
+    -- Demo trigger using a proxy setting + checkbox (works even if CreateCustomControl is absent)
+    do
+        local variable = "RoachSFX_DemoTrigger" -- internal id only
+        local name = "Demo"
+        local tooltip = "Do not click!!! DANGEROUS!!!"
+        local defaultValue = false
+
+        -- GetValue always returns false so the control never stores state.
+        local function GetValue()
+            return false
+        end
+
+        -- SetValue is called when the user toggles the checkbox.
+        -- We run the demo action if present. No persistent storage.
+        local function SetValue(value)
+            if value then
+                M.DebugPrint("Demo button clicked. Hooray!")
+                ns.message.ShowRoachWarning(UnitName("player"))
+                ns.sound.PlayRandomRoachSound()
+            end
+            -- Do not store anything; GetValue returning false ensures UI resets.
+        end
+
+        -- Register a proxy setting (no variableTbl needed)
+        local setting = Settings.RegisterProxySetting(category, variable, type(defaultValue), name, defaultValue,
+            GetValue,
+            SetValue)
+        -- Use a checkbox as a momentary 'button'
         Settings.CreateCheckbox(category, setting, tooltip)
     end
 

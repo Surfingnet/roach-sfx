@@ -50,7 +50,8 @@ function M.ShowRoachWarning(name)
     if not ns.config.Get("showRaidWarnings") then return end
     local displayName = ns.config.Get("stripServer") and StripServer(name) or name
     local message = GetRandomRoachMessage(displayName)
-    RaidWarningFrame:AddMessage(message, 1, 1, 0)
+    ---@diagnostic disable-next-line: undefined-global
+    RaidNotice_AddMessage(RaidWarningFrame, message, ChatTypeInfo["RAID_WARNING"])
 end
 
 ns.message = M
