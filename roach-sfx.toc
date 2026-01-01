@@ -1,6 +1,6 @@
 ## Interface: 11403
 ## Title: roach SFX
-## Version: 1.6.3-beta
+## Version: 1.6.4-beta
 ## Author: Surfingnet
 ## Notes: Plays a sound when somebody roaches out
 ## SavedVariablesPerCharacter: RoachSFXDB
