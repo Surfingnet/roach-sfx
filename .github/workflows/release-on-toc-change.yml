@@ -34,7 +34,7 @@ jobs:
             exit 0
           fi
 
-          # Extract version from the line beginning with "## Version: "
+          # Extract the version from the line beginning with "## Version: "
           # Example line: "## Version: 1.6.1-beta"
           version=$(awk -F': ' '/^## Version: / {print $2; exit}' roach-sfx.toc | tr -d '\r')
           if [ -z "$version" ]; then
@@ -57,11 +57,19 @@ jobs:
             prerelease="true"
           fi
 
+          # Map to CurseForge release_type: stable -> release
+          if [ "$channel" = "stable" ]; then
+            cf_release_type="release"
+          else
+            cf_release_type="$channel"
+          fi
+
           # Expose outputs for later steps
           echo "toc_version=$version" >> $GITHUB_OUTPUT
           echo "tag_name=$tag" >> $GITHUB_OUTPUT
           echo "channel=$channel" >> $GITHUB_OUTPUT
           echo "prerelease=$prerelease" >> $GITHUB_OUTPUT
+          echo "cf_release_type=$cf_release_type" >> $GITHUB_OUTPUT
 
           # Check whether tag already exists
           git fetch --tags
@@ -105,7 +113,6 @@ jobs:
           cd package
           zip -r "../roach-sfx-${{ steps.extract.outputs.toc_version }}.zip" "roach-sfx"
 
-
       - name: Show zip contents (debug)
         if: steps.extract.outputs.changed == 'true'
         run: |
@@ -135,3 +142,25 @@ jobs:
           asset_path: roach-sfx-${{ steps.extract.outputs.toc_version }}.zip
           asset_name: roach-sfx-${{ steps.extract.outputs.toc_version }}.zip
           asset_content_type: application/zip
+
+      - name: Upload package to CurseForge
+        if: steps.extract.outputs.changed == 'true'
+        uses: itsmeow/curseforge-upload@v3.1.2
+        with:
+          # Path to the zip produced earlier
+          file_path: "roach-sfx-${{ steps.extract.outputs.toc_version }}.zip"
+          # Project numeric ID on CurseForge
+          project_id: "1417993"
+          # Game endpoint for World of Warcraft
+          game_endpoint: "wow"
+          # Map to Classic flavor; action will resolve this to correct IDs
+          game_versions: "Classic"
+          # Release type: 'alpha' / 'beta' / 'release'
+          release_type: ${{ steps.extract.outputs.cf_release_type }}
+          # Friendly display name on CurseForge
+          display_name: "roach-sfx ${{ steps.extract.outputs.toc_version }}"
+          # Short changelog pointing to GitHub release
+          changelog: "See GitHub release ${{ steps.extract.outputs.tag_name }}"
+          changelog_type: "markdown"
+          # API token is passed as the "token" input (use the secret you created)
+          token: ${{ secrets.CF_API_TOKEN }}
