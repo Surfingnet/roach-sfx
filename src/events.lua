@@ -67,7 +67,9 @@ local function OnMsgSystem(event, msg, ...)
     if not leaverName then
         if ns.chat_parser.DetectSelfOrDisband(event, msg, ...) then
             ns.history.ClearHistory()
-            -- TODO: deathlog clear?
+            if ns.hardcore.IsHardcoreRealm() then
+                ns.hardcore.clearDeathLog()
+            end
         end
         return
     end
@@ -87,21 +89,79 @@ local function OnMsgSystem(event, msg, ...)
     end
 
     -- Check if someone is in combat
-    if ns.combat.IsAnyGroupMemberInCombat() then
-        HandleRoaching(leaverName)
+    if not ns.combat.IsAnyGroupMemberInCombat() then
+        return
     end
+
+    if ns.hardcore.IsHardcoreRealm() and ns.hardcore.IsInDeathLog(leaverName) then
+        return
+    end
+
+    HandleRoaching(leaverName)
+end
+
+-- Handler for UNIT_HEALTH_FREQUENT to detect deaths in Hardcore realms
+local function OnUnitHealthFrequent(unit)
+    --if not ns.hardcore.IsHardcoreRealm() then return end
+    if not unit or not ns.roster.IsUnitInGroup(unit) then return end
+    if not UnitExists(unit) then return end
+    if not (UnitIsDeadOrGhost(unit) or UnitHealth(unit) <= 0) then
+        return
+    end
+
+    local unitName = UnitName(unit)
+    if ns.hardcore.IsInDeathLog(unitName) then
+        return
+    end
+
+    ns.hardcore.AddToDeathLog(unitName)
+
+    if ns.config.Get("debugMode") then
+        ns.config.DebugPrint(unitName .. " has died (from UNIT_HEALTH_FREQUENT event)")
+    end
+end
+
+-- Paired with OnUnitHealthFrequent to catch all deaths
+local function OnCombatLogEventUnfiltered()
+    local _, subEvent, _, _, _, _, _, destGUID, destName, _, _, _ = CombatLogGetCurrentEventInfo()
+
+    if not subEvent == "UNIT_DIED" then
+        return
+    end
+
+    -- check if destGUID corresponds to a raid member
+    if not ns.roster.IsGUIDInGroup(destGUID) then
+        return
+    end
+
+    ns.hardcore.AddToDeathLog(destName)
+
+    if ns.config.Get("debugMode") then
+        ns.config.DebugPrint(destName .. " has died (from UNIT_DIED event in COMBAT_LOG_EVENT_UNFILTERED)")
+    end
+end
+
+-- Disable death detection handlers if not in a Hardcore realm
+-- (leaving group when dead on non-hardcore is roaching if the fight goes on!)
+if not ns.hardcore.IsHardcoreRealm() then
+    OnCombatLogEventUnfiltered = function() end
+    OnUnitHealthFrequent = function() end
 end
 
 -- Main event handler - routes events to specific handlers
 function M.OnEvent(event, ...)
-    if event == "PLAYER_ENTERING_WORLD" then
-        OnPlayerEnteringWorld()
+    if event == "COMBAT_LOG_EVENT_UNFILTERED" then
+        OnCombatLogEventUnfiltered()
+    elseif event == "UNIT_HEALTH_FREQUENT" then
+        OnUnitHealthFrequent(...)
     elseif event == "UNIT_SPELLCAST_CHANNEL_START" then
         OnUnitSpellcastChannelStart(...)
     elseif event == "CHAT_MSG_SYSTEM" then
         OnMsgSystem(event, ...)
-    -- Add more event routing as needed
+    elseif event == "PLAYER_ENTERING_WORLD" then
+        OnPlayerEnteringWorld()
     end
+    -- Add more event routing as needed
 end
 
 ns.events = M

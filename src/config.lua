@@ -6,14 +6,14 @@ local M = ns.config
 
 -- Default settings
 local defaults = {
-    soundChannel = "SFX",          -- Sound channel: "Master", "SFX", "Music", "Ambience", "Dialog"
-    cooldownTime = 5,              -- Minimum time between sounds (seconds)
+    soundChannel = "SFX",           -- Sound channel: "Master", "SFX", "Music", "Ambience", "Dialog"
+    cooldownTime = 5,               -- Minimum time between sounds (seconds)
     enableOutsideInstances = false, -- Whether to work outside PvE instances
-    showRaidWarnings = true,       -- Whether to show raid warning messages
-    enableSounds = true,           -- Whether to play roach sounds
-    allowPlayer = false,           -- Whether to notify when player themselves roaches
-    stripServer = true,            -- Whether to strip server name from displayed names
-    debugMode = false              -- Enable debug logging
+    showRaidWarnings = true,        -- Whether to show raid warning messages
+    enableSounds = true,            -- Whether to play roach sounds
+    allowPlayer = false,            -- Whether to notify when player themselves roaches
+    stripServer = true,             -- Whether to strip server name from displayed names
+    debugMode = false               -- Enable debug logging
 }
 
 -- Initialize config
@@ -65,7 +65,7 @@ local function CreateOptionsPanel()
     local soundChannelDropDown = CreateFrame("Frame", "RoachSFXSoundChannelDropDown", panel, "UIDropDownMenuTemplate")
     soundChannelDropDown:SetPoint("TOPLEFT", soundChannelLabel, "BOTTOMLEFT", -16, -8)
 
-    local soundChannels = {"Master", "SFX", "Music", "Ambience", "Dialog"}
+    local soundChannels = { "Master", "SFX", "Music", "Ambience", "Dialog" }
 
     UIDropDownMenu_Initialize(soundChannelDropDown, function(frame, level, menuList)
         for _, channel in ipairs(soundChannels) do
@@ -99,13 +99,14 @@ local function CreateOptionsPanel()
     cooldownSlider.High:SetText("5")
     cooldownSlider.Text:SetText(RoachSFXDB.cooldownTime)
     cooldownSlider:SetScript("OnValueChanged", function(self, value)
-        value = math.floor(value + 0.5)  -- Round to nearest integer
+        value = math.floor(value + 0.5) -- Round to nearest integer
         RoachSFXDB.cooldownTime = value
         self.Text:SetText(value)
     end)
 
     -- Checkbox for raid warnings setting
-    local raidWarningCheck = CreateFrame("CheckButton", "RoachSFXRaidWarningCheck", panel, "InterfaceOptionsCheckButtonTemplate")
+    local raidWarningCheck = CreateFrame("CheckButton", "RoachSFXRaidWarningCheck", panel,
+        "InterfaceOptionsCheckButtonTemplate")
     raidWarningCheck:SetPoint("TOPLEFT", cooldownSlider, "BOTTOMLEFT", -10, -16)
     raidWarningCheck.Text:SetText("Show raid warning messages")
     raidWarningCheck:SetChecked(RoachSFXDB.showRaidWarnings)
@@ -168,7 +169,7 @@ end
 -- Register the options panel
 function M.RegisterOptions()
     local panel = CreateOptionsPanel()
----@diagnostic disable-next-line: undefined-global
+    ---@diagnostic disable-next-line: undefined-global
     InterfaceOptions_AddCategory(panel) -- WoW API function
 end
 

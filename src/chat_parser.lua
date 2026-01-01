@@ -32,7 +32,7 @@ local selfConsts = { -- messages indicating that the client has left
     "YOU_LEFT_PARTY",
     "YOU_LEFT_RAID",
     "ERR_LEFT_RAID",
-    "ERR_LEAVE_GROUP", -- variant possible
+    "ERR_LEAVE_GROUP",  -- variant possible
 }
 local disbandConsts = { -- messages indicating that the group has been disbanded
     "ERR_GROUP_DISBANDED",

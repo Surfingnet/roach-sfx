@@ -15,8 +15,8 @@ ns.frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 ns.frame:RegisterEvent("GROUP_ROSTER_UPDATE")
 ns.frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START")
 ns.frame:RegisterEvent("CHAT_MSG_SYSTEM")
---ns.frame:RegisterEvent("UNIT_HEALTH_FREQUENT")
---ns.frame:RegisterEvent("UNIT_DIED")
+ns.frame:RegisterEvent("UNIT_HEALTH_FREQUENT")
+ns.frame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
 -- Add other events as needed
 
 -- Initialize other modules

@@ -20,7 +20,7 @@ function M.IsAnyGroupMemberInCombat()
   if IsInRaid() then
     -- raid1..raidN, including all members (the player may be at any index)
     for i = 1, groupSize do
-      local unit = "raid"..i
+      local unit = "raid" .. i
       if UnitExists(unit) and UnitIsConnected(unit) then
         if UnitAffectingCombat(unit) then
           return true
@@ -31,7 +31,7 @@ function M.IsAnyGroupMemberInCombat()
     -- party tokens only represent other members (player is not partyN)
     local partyCount = groupSize - 1
     for i = 1, partyCount do
-      local unit = "party"..i
+      local unit = "party" .. i
       if UnitExists(unit) and UnitIsConnected(unit) then
         if UnitAffectingCombat(unit) then
           return true
@@ -44,4 +44,3 @@ function M.IsAnyGroupMemberInCombat()
 end
 
 ns.combat = M
-

@@ -32,7 +32,7 @@ local roachQuotesCt = #roachQuotes
 
 -- Local function to strip server from name
 local function StripServer(name)
-    return name:gsub("-.*", "")  -- Remove everything after first dash
+    return name:gsub("-.*", "") -- Remove everything after first dash
 end
 
 ---Get a random roach message with the player's name inserted.
@@ -40,7 +40,7 @@ end
 ---@return string
 local function GetRandomRoachMessage(name)
     local quote = roachQuotes[fastrandom(roachQuotesCt)]
-    local result = string.gsub(quote, "XYZ", name)  -- Replace placeholder with player name
+    local result = string.gsub(quote, "XYZ", name) -- Replace placeholder with player name
     return result
 end
 

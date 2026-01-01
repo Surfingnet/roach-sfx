@@ -30,7 +30,7 @@ function M.PlayRandomRoachSound()
     local currentTime = GetTime()
     local cooldown = ns.config.Get("cooldownTime") or 3
     if currentTime - lastPlayed < cooldown then
-        return  -- Still on cooldown
+        return -- Still on cooldown
     end
 
     local randomIndex = fastrandom(soundFilesCt)
