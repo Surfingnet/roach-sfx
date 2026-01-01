@@ -119,29 +119,62 @@ jobs:
           ls -l roach-sfx-${{ steps.extract.outputs.toc_version }}.zip || true
           unzip -l roach-sfx-${{ steps.extract.outputs.toc_version }}.zip || true
 
-      - name: Create GitHub release
+      - name: Create GitHub release and upload zip (no set-output)
         if: steps.extract.outputs.changed == 'true'
-        id: create_release
-        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.extract.outputs.tag_name }}
-          release_name: ${{ steps.extract.outputs.tag_name }} (${{ steps.extract.outputs.channel }})
-          body: Release ${{ steps.extract.outputs.tag_name }}
-          draft: false
-          prerelease: ${{ steps.extract.outputs.prerelease }}
+        run: |
+          set -e
+          repo="$GITHUB_REPOSITORY"
+          tag="${{ steps.extract.outputs.tag_name }}"
+          name="${{ steps.extract.outputs.tag_name }} (${{ steps.extract.outputs.channel }})"
+          body="Release ${{ steps.extract.outputs.tag_name }}"
+          prerelease="${{ steps.extract.outputs.prerelease }}"
+          asset_path="roach-sfx-${{ steps.extract.outputs.toc_version }}.zip"
+          asset_name="$(basename "$asset_path")"
 
-      - name: Upload release asset
-        if: steps.extract.outputs.changed == 'true'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: roach-sfx-${{ steps.extract.outputs.toc_version }}.zip
-          asset_name: roach-sfx-${{ steps.extract.outputs.toc_version }}.zip
-          asset_content_type: application/zip
+          # Create release via REST API
+          payload=$(printf '{"tag_name":"%s","name":"%s","body":"%s","draft":false,"prerelease":%s}' \
+            "$tag" "$name" "$body" "$prerelease")
+
+          echo "Creating release for $repo with tag $tag"
+          resp=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+                       -H "Accept: application/vnd.github+json" \
+                       -d "$payload" \
+                       "https://api.github.com/repos/$repo/releases")
+
+          # Extract release id and upload_url from JSON response using python
+          release_id=$(printf '%s' "$resp" | python - <<'PY'
+          import sys, json
+          r = json.load(sys.stdin)
+          print(r.get("id",""))
+          PY
+          )
+          upload_url_template=$(printf '%s' "$resp" | python - <<'PY'
+          import sys, json
+          r = json.load(sys.stdin)
+          print(r.get("upload_url",""))
+          PY
+          )
+          if [ -z "$release_id" ] || [ -z "$upload_url_template" ]; then
+            echo "Failed to create release. Response:"
+            printf '%s\n' "$resp"
+            exit 1
+          fi
+
+          # Strip the URL template part: "{?name,label}"
+          upload_url=${upload_url_template%\{*}
+
+          echo "Release created (id=$release_id). Uploading asset $asset_name"
+
+          # Upload the asset
+          curl --fail -s -H "Authorization: token $GITHUB_TOKEN" \
+               -H "Content-Type: application/zip" \
+               --data-binary @"$asset_path" \
+               "$upload_url?name=$(python -c "import urllib.parse;print(urllib.parse.quote('''$asset_name'''))")"
+
+          echo "Asset uploaded."
+
 
       - name: Upload package to CurseForge
         if: steps.extract.outputs.changed == 'true'
