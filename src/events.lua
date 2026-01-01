@@ -63,12 +63,25 @@ end
 local function OnMsgSystem(event, msg, ...)
     local leaverName = ns.chat_parser.DetectLeaverFromSystem(event, msg, ...)
     if not leaverName then
-        if ns.chat_parser.DetectSelfOrDisband(event, msg, ...) then
+        local selfOrDisband = ns.chat_parser.DetectSelfOrDisband(event, msg, ...)
+
+        if selfOrDisband == "disband" then
+            -- TODO: get the real leader name and remember it
+            HandleRoaching("the leader")
+            ns.config.DebugPrint("Group disbanded")
+            ns.history.ClearHistory()
+            if ns.config.Get("hardcore") then
+                ns.hardcore.clearDeathLog()
+            end
+        elseif selfOrDisband == "self" then
+            HandleRoaching(UnitName("player"))
+            ns.config.DebugPrint("You left the group")
             ns.history.ClearHistory()
             if ns.config.Get("hardcore") then
                 ns.hardcore.clearDeathLog()
             end
         end
+
         return
     end
 
