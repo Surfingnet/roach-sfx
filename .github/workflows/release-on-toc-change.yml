@@ -1,0 +1,86 @@
+name: Auto release when TOC version changes
+
+on:
+  push:
+    branches:
+      - main  # change "main" if the default branch has a different name
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read version from TOC
+        id: check
+        run: |
+          set -e
+
+          if [ ! -f "roach-sfx.toc" ]; then
+            echo "No toc file found" >&2
+            echo "changed=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Cherche une ligne contenant "Version"
+          version_line=$(grep -i '^## *Version' roach-sfx.toc | head -n1 || true)
+          if [ -z "$version_line" ]; then
+            version_line=$(grep -i 'Version' roach-sfx.toc | head -n1 || true)
+          fi
+          if [ -z "$version_line" ]; then
+            echo "No version line found in roach-sfx.toc" >&2
+            echo "changed=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          version=$(printf "%s" "$version_line" | sed -E 's/.*[Vv]ersion[:[:space:]]*//I' | tr -d '\r' | tr -d '"')
+          tag="v$version"
+
+          echo "toc_version=$version" >> $GITHUB_OUTPUT
+          echo "tag_name=$tag" >> $GITHUB_OUTPUT
+
+          git fetch --tags
+          latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          echo "latest_tag=$latest_tag" >> $GITHUB_OUTPUT
+
+          if [ "$latest_tag" = "$tag" ]; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create tag
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git.config user.email "41898282+github-actions[bot]@users.noreply.github.com" || true
+          git tag "${{ steps.check.outputs.tag_name }}" -a -m "Release ${{ steps.check.outputs.toc_version }}"
+          git push origin "${{ steps.check.outputs.tag_name }}"
+
+      - name: Prepare zip
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          rm -rf package || true
+          mkdir -p package/roach-sfx
+          cp roach-sfx.toc package/roach-sfx/
+          cp -r src package/roach-sfx/
+          cp -r sounds package/roach-sfx/
+          cd package
+          zip -r "../roach-sfx-${{ steps.check.outputs.toc_version }}.zip" "roach-sfx"
+
+      - name: Create GitHub Release
+        if: steps.check.outputs.changed == 'true'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.check.outputs.tag_name }}
+          name: ${{ steps.check.outputs.tag_name }}
+          files: roach-sfx-${{ steps.check.outputs.toc_version }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

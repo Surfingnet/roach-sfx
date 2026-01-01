@@ -1,6 +1,5 @@
 *.code-workspace
 .VSCodeCounter*
 .vscode*
-.github*
-release*
+*copilot-instructions.md*
 TODO
