@@ -106,13 +106,32 @@ jobs:
           zip -r "../roach-sfx-${{ steps.extract.outputs.toc_version }}.zip" "roach-sfx"
 
 
-      - name: Create GitHub Release and upload zip
+      - name: Show zip contents (debug)
         if: steps.extract.outputs.changed == 'true'
-        uses: ncipollo/release-action@v1
-        with:
-          tag: ${{ steps.extract.outputs.tag_name }}
-          name: ${{ steps.extract.outputs.tag_name }} (${{ steps.extract.outputs.channel }})
-          files: roach-sfx-${{ steps.extract.outputs.toc_version }}.zip
-          prerelease: ${{ steps.extract.outputs.prerelease }}
+        run: |
+          ls -l roach-sfx-${{ steps.extract.outputs.toc_version }}.zip || true
+          unzip -l roach-sfx-${{ steps.extract.outputs.toc_version }}.zip || true
+
+      - name: Create GitHub release
+        if: steps.extract.outputs.changed == 'true'
+        id: create_release
+        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.extract.outputs.tag_name }}
+          release_name: ${{ steps.extract.outputs.tag_name }} (${{ steps.extract.outputs.channel }})
+          body: Release ${{ steps.extract.outputs.tag_name }}
+          draft: false
+          prerelease: ${{ steps.extract.outputs.prerelease }}
+
+      - name: Upload release asset
+        if: steps.extract.outputs.changed == 'true'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: roach-sfx-${{ steps.extract.outputs.toc_version }}.zip
+          asset_name: roach-sfx-${{ steps.extract.outputs.toc_version }}.zip
+          asset_content_type: application/zip
