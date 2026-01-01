@@ -111,7 +111,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Resolve CurseForge game version type id for Classic
+      - name: Resolve CurseForge game version ID for Classic
         if: steps.extract.outputs.changed == 'true'
         id: resolve_cf_game_version
         env:
@@ -119,45 +119,61 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Use site-specific API endpoint as per itsmeow README:
-          # https://<endpoint>.curseforge.com/api/game/version-types?token=...
+          # Use the site-specific API (itsmeow/curseforge-upload expects token generated from
+          # https://www.curseforge.com/account/api-tokens). We query the version-types endpoint
+          # for the wow endpoint (e.g. https://wow.curseforge.com/api/game/version-types?token=TOKEN)
           endpoint="wow"
           token="${CF_TOKEN}"
-
           url="https://${endpoint}.curseforge.com/api/game/version-types?token=${token}"
-          echo "Fetching game version types from: $url"
 
-          resp=$(curl -sS "$url" || true)
+          echo "Requesting: $url"
 
-          if [ -z "$resp" ]; then
-            echo "Failed to fetch version-types or empty response" >&2
+          tmpfile="$(mktemp)"
+          http_code=$(curl -sS -w "%{http_code}" -o "$tmpfile" "$url" || true)
+
+          if [ "$http_code" != "200" ]; then
+            echo "CurseForge version-types request failed (HTTP $http_code). Response (first 4000 chars):"
+            head -c 4000 "$tmpfile" || true
+            echo "" >&2
             echo "game_version_id=" >> $GITHUB_OUTPUT
             exit 1
           fi
 
-          # Parse JSON safely and find an id for Classic (slug=='classic' or name contains 'classic')
-          cf_id=$(printf '%s' "$resp" | python3 - <<'PY'
-          import sys, json
+          # Ensure file is non-empty
+          if [ ! -s "$tmpfile" ]; then
+            echo "Empty response from CurseForge version-types endpoint." >&2
+            echo "game_version_id=" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          # Parse JSON file safely: prefer slug == 'classic', otherwise name contains 'classic'
+          cf_id=$(python3 - <<'PY'
+          import json,sys
+          fp = sys.argv[1]
           try:
-            data = json.load(sys.stdin)
+            with open(fp, 'r', encoding='utf-8') as f:
+              data = json.load(f)
           except Exception:
             sys.exit(0)
-          # data expected to be a list of { id, name, slug, ... } or similar
+          # Data is expected as a list of objects with 'id','name','slug' etc.
           for item in data:
-            name = str(item.get('name','')).lower()
-            slug = str(item.get('slug','')).lower()
-            if slug == 'classic' or 'classic' in name:
+            slug = str(item.get('slug','') or '').lower()
+            if slug == 'classic':
               print(item.get('id',''))
               sys.exit(0)
-          # fallback: try to find entries containing 'classic' anywhere
           for item in data:
-            if 'classic' in str(item).lower():
+            name = str(item.get('name','') or '').lower()
+            if 'classic' in name:
               print(item.get('id',''))
               sys.exit(0)
-          # nothing found
+          # fallback: nothing
           sys.exit(0)
           PY
+          "$tmpfile"
           )
+
+          # clean up
+          rm -f "$tmpfile" || true
 
           if [ -z "$cf_id" ]; then
             echo "Could not resolve a CurseForge game version id for 'Classic' on endpoint ${endpoint}" >&2
