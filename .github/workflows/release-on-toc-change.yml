@@ -3,84 +3,90 @@ name: Auto release when TOC version changes
 on:
   push:
     branches:
-      - main  # change "main" if the default branch has a different name
+      - main  # change this if your default branch is not "main"
 
 permissions:
   contents: write
+
+env:
+  ADDON_DIR: roach-sfx
 
 jobs:
   release:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: true
 
-      - name: Read version from TOC
-        id: check
+      - name: Extract version from TOC
+        id: extract
         run: |
           set -e
 
+          # Ensure the TOC file exists
           if [ ! -f "roach-sfx.toc" ]; then
-            echo "No toc file found" >&2
+            echo "TOC file not found" >&2
             echo "changed=false" >> $GITHUB_OUTPUT
             exit 0
           fi
 
-          # Cherche une ligne contenant "Version"
-          version_line=$(grep -i '^## *Version' roach-sfx.toc | head -n1 || true)
-          if [ -z "$version_line" ]; then
-            version_line=$(grep -i 'Version' roach-sfx.toc | head -n1 || true)
-          fi
-          if [ -z "$version_line" ]; then
-            echo "No version line found in roach-sfx.toc" >&2
+          # Extract the version from the line beginning with "## Version: "
+          # Example line: "## Version: 1.6.1-beta"
+          version=$(awk -F': ' '/^## Version: / {print $2; exit}' roach-sfx.toc | tr -d '\r')
+          if [ -z "$version" ]; then
+            echo "Version not found in TOC" >&2
             echo "changed=false" >> $GITHUB_OUTPUT
             exit 0
           fi
 
-          version=$(printf "%s" "$version_line" | sed -E 's/.*[Vv]ersion[:[:space:]]*//I' | tr -d '\r' | tr -d '"')
           tag="v$version"
 
           echo "toc_version=$version" >> $GITHUB_OUTPUT
           echo "tag_name=$tag" >> $GITHUB_OUTPUT
 
+          # Fetch tags and check if this tag already exists
           git fetch --tags
-          latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          echo "latest_tag=$latest_tag" >> $GITHUB_OUTPUT
-
-          if [ "$latest_tag" = "$tag" ]; then
+          if git rev-parse --verify "refs/tags/$tag" >/dev/null 2>&1; then
             echo "changed=false" >> $GITHUB_OUTPUT
           else
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
 
-      - name: Create tag
-        if: steps.check.outputs.changed == 'true'
+      - name: Create annotated git tag
+        if: steps.extract.outputs.changed == 'true'
         run: |
+          # Configure a git identity for the action
           git config user.name "github-actions[bot]"
-          git.config user.email "41898282+github-actions[bot]@users.noreply.github.com" || true
-          git tag "${{ steps.check.outputs.tag_name }}" -a -m "Release ${{ steps.check.outputs.toc_version }}"
-          git push origin "${{ steps.check.outputs.tag_name }}"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Prepare zip
-        if: steps.check.outputs.changed == 'true'
+          # Create and push annotated tag based on TOC version
+          git tag -a "${{ steps.extract.outputs.tag_name }}" -m "Release ${{ steps.extract.outputs.toc_version }}"
+          git push origin "${{ steps.extract.outputs.tag_name }}"
+
+      - name: Build zip package
+        if: steps.extract.outputs.changed == 'true'
         run: |
+          # Prepare package folder containing exactly the addon folder and required files
           rm -rf package || true
-          mkdir -p package/roach-sfx
-          cp roach-sfx.toc package/roach-sfx/
-          cp -r src package/roach-sfx/
-          cp -r sounds package/roach-sfx/
-          cd package
-          zip -r "../roach-sfx-${{ steps.check.outputs.toc_version }}.zip" "roach-sfx"
+          mkdir -p package/${{ env.ADDON_DIR }}
+          cp roach-sfx.toc package/${{ env.ADDON_DIR }}/
+          cp -r src package/${{ env.ADDON_DIR }}/
+          cp -r sounds package/${{ env.ADDON_DIR }}/
 
-      - name: Create GitHub Release
-        if: steps.check.outputs.changed == 'true'
+          # Create zip named roach-sfx-<version>.zip at repository root
+          cd package
+          zip -r "../${{ env.ADDON_DIR }}-${{ steps.extract.outputs.toc_version }}.zip" "${{ env.ADDON_DIR }}"
+
+      - name: Create GitHub Release and upload zip
+        if: steps.extract.outputs.changed == 'true'
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ steps.check.outputs.tag_name }}
-          name: ${{ steps.check.outputs.tag_name }}
-          files: roach-sfx-${{ steps.check.outputs.toc_version }}.zip
+          tag_name: ${{ steps.extract.outputs.tag_name }}
+          name: ${{ steps.extract.outputs.tag_name }}
+          files: roach-sfx-${{ steps.extract.outputs.toc_version }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
