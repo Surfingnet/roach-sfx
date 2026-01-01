@@ -10,6 +10,10 @@ permissions:
 
 env:
   ADDON_DIR: roach-sfx
+  # Replace the placeholder below with the numeric game-version IDs for Classic,
+  # obtained by Inspect Element on the CurseForge file upload form (comma-separated).
+  # Example: CF_GAME_VERSION_IDS="12345,67890"
+  CF_GAME_VERSION_IDS: "14029"
 
 jobs:
   release:
@@ -26,7 +30,6 @@ jobs:
         id: extract
         run: |
           set -e
-
           if [ ! -f "roach-sfx.toc" ]; then
             echo "changed=false" >> $GITHUB_OUTPUT
             exit 0
@@ -43,7 +46,6 @@ jobs:
           lc_version=$(printf "%s" "$version" | tr '[:upper:]' '[:lower:]')
           channel="stable"
           prerelease="false"
-
           if printf "%s" "$lc_version" | grep -q 'alpha'; then
             channel="alpha"
             prerelease="true"
@@ -111,23 +113,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload package to CurseForge (convenience-name matching for Classic)
+      - name: Upload package to CurseForge (use explicit numeric game-version IDs)
         if: steps.extract.outputs.changed == 'true'
         uses: itsmeow/curseforge-upload@v3.1.2
         with:
           file_path: "roach-sfx-${{ steps.extract.outputs.toc_version }}.zip"
           project_id: "1417993"
           game_endpoint: "wow"
-          # Provide several human-friendly names/slugs that the action will map to numeric IDs.
-          # The action will attempt to resolve these to the correct numeric game version IDs internally.
-          # Order: most specific first.
-          game_versions: >
-            Classic,
-            WoW Classic,
-            Classic Era,
-            Hardcore,
-            Classic + Era,
-            Classic (Era)
+          # Use explicit numeric game-version IDs for Classic (comma-separated).
+          # Replace the placeholder in CF_GAME_VERSION_IDS above with the real IDs.
+          game_versions: ${{ env.CF_GAME_VERSION_IDS }}
           release_type: ${{ steps.extract.outputs.cf_release_type }}
           display_name: "roach-sfx ${{ steps.extract.outputs.toc_version }}"
           changelog: "See GitHub release ${{ steps.extract.outputs.tag_name }}"
