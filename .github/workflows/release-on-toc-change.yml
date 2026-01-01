@@ -29,7 +29,6 @@ jobs:
 
           # Ensure TOC file exists
           if [ ! -f "roach-sfx.toc" ]; then
-            echo "TOC file not found" >&2
             echo "changed=false" >> $GITHUB_OUTPUT
             exit 0
           fi
@@ -38,7 +37,6 @@ jobs:
           # Example line: "## Version: 1.6.1-beta"
           version=$(awk -F': ' '/^## Version: / {print $2; exit}' roach-sfx.toc | tr -d '\r')
           if [ -z "$version" ]; then
-            echo "Version not found in TOC" >&2
             echo "changed=false" >> $GITHUB_OUTPUT
             exit 0
           fi
@@ -49,6 +47,7 @@ jobs:
           lc_version=$(printf "%s" "$version" | tr '[:upper:]' '[:lower:]')
           channel="stable"
           prerelease="false"
+
           if printf "%s" "$lc_version" | grep -q 'alpha'; then
             channel="alpha"
             prerelease="true"
@@ -64,7 +63,7 @@ jobs:
             cf_release_type="$channel"
           fi
 
-          # Expose outputs for later steps (using environment files instead of set-output)
+          # Expose outputs for later steps using environment files
           echo "toc_version=$version" >> $GITHUB_OUTPUT
           echo "tag_name=$tag" >> $GITHUB_OUTPUT
           echo "channel=$channel" >> $GITHUB_OUTPUT
@@ -119,48 +118,74 @@ jobs:
           ls -l roach-sfx-${{ steps.extract.outputs.toc_version }}.zip || true
           unzip -l roach-sfx-${{ steps.extract.outputs.toc_version }}.zip || true
 
-      - name: Create GitHub release
+      - name: Create GitHub release and upload zip (no set-output warnings)
         if: steps.extract.outputs.changed == 'true'
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.extract.outputs.tag_name }}
-          release_name: ${{ steps.extract.outputs.tag_name }} (${{ steps.extract.outputs.channel }})
-          body: Release ${{ steps.extract.outputs.tag_name }}
-          draft: false
+          name: ${{ steps.extract.outputs.tag_name }} (${{ steps.extract.outputs.channel }})
           prerelease: ${{ steps.extract.outputs.prerelease }}
-
-      - name: Upload release asset
-        if: steps.extract.outputs.changed == 'true'
-        uses: actions/upload-release-asset@v1
+          files: |
+            roach-sfx-${{ steps.extract.outputs.toc_version }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: roach-sfx-${{ steps.extract.outputs.toc_version }}.zip
-          asset_name: roach-sfx-${{ steps.extract.outputs.toc_version }}.zip
-          asset_content_type: application/zip
 
-      - name: Upload package to CurseForge
+      - name: Resolve CurseForge game version ID for Classic
+        if: steps.extract.outputs.changed == 'true'
+        id: resolve_cf_game_version
+        env:
+          CF_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: |
+          set -e
+          endpoint="wow"
+          token="$CF_TOKEN"
+
+          # Query CurseForge game versions for the given endpoint.
+          # This avoids ambiguous name matching and selects the first entry whose
+          # name contains "Classic" or whose slug equals "classic".
+          resp=$(curl -sS "https://${endpoint}.curseforge.com/api/game/versions?token=${token}")
+          if [ -z "$resp" ]; then
+            echo "Failed to fetch game versions from CurseForge" >&2
+            exit 1
+          fi
+
+          # Parse JSON and pick the best match (name contains "Classic" OR slug == "classic")
+          cf_id=$(printf '%s' "$resp" | python - <<'PY'
+          import sys, json
+          data = json.load(sys.stdin)
+          # Prefer exact slug match first
+          for v in data:
+            if v.get('slug','').lower() == 'classic':
+              print(v.get('id'))
+              sys.exit(0)
+          # Then prefer name containing 'Classic'
+          for v in data:
+            if 'classic' in v.get('name','').lower():
+              print(v.get('id'))
+              sys.exit(0)
+          # Fallback: print empty
+          print('')
+          PY
+          )
+          if [ -z "$cf_id" ]; then
+            echo "Could not resolve a CurseForge game version id for 'Classic' on endpoint ${endpoint}" >&2
+            echo "game_version_id=" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          echo "game_version_id=$cf_id" >> $GITHUB_OUTPUT
+
+      - name: Upload package to CurseForge (use numeric game version id)
         if: steps.extract.outputs.changed == 'true'
         uses: itsmeow/curseforge-upload@v3.1.2
         with:
-          # Path to the zip produced earlier
           file_path: "roach-sfx-${{ steps.extract.outputs.toc_version }}.zip"
-          # Project numeric ID on CurseForge
           project_id: "1417993"
-          # Game endpoint for World of Warcraft
           game_endpoint: "wow"
-          # Map to Classic flavor; action will resolve this to correct IDs
-          game_versions: "Classic"
-          # Release type: 'alpha' / 'beta' / 'release'
+          # Use the resolved numeric game version id to ensure Classic (avoid ambiguous names)
+          game_versions: ${{ steps.resolve_cf_game_version.outputs.game_version_id }}
           release_type: ${{ steps.extract.outputs.cf_release_type }}
-          # Friendly display name on CurseForge
           display_name: "roach-sfx ${{ steps.extract.outputs.toc_version }}"
-          # Short changelog pointing to GitHub release
           changelog: "See GitHub release ${{ steps.extract.outputs.tag_name }}"
           changelog_type: "markdown"
-          # API token is passed as the "token" input (use the secret you created)
           token: ${{ secrets.CF_API_TOKEN }}
