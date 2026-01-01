@@ -28,7 +28,3 @@ function M.clearDeathLog()
 end
 
 ns.hardcore = M
-
-if ns.config.Get("debugMode") then
-    ns.config.DebugPrint("Hardcore module loaded.")
-end

@@ -166,7 +166,3 @@ end
 
 M.ready = true
 ns.events = M
-
-if ns.config.Get("debugMode") then
-    ns.config.DebugPrint("Events module loaded.")
-end

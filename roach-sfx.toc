@@ -3,7 +3,7 @@
 ## Version: 1.4-alpha
 ## Author: Surfingnet
 ## Notes: Plays a sound when somebody roaches out
-## SavedVariables: RoachSFXDB
+## SavedVariablesPerCharacter: RoachSFXDB
 
 src/config.lua
 src/combat.lua

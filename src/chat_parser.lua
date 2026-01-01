@@ -93,7 +93,3 @@ function M.DetectSelfOrDisband(event, msg, ...)
 end
 
 ns.chat_parser = M
-
-if ns.config.Get("debugMode") then
-    ns.config.DebugPrint("Chat parser module loaded.")
-end

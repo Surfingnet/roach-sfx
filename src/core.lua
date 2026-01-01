@@ -31,7 +31,7 @@ local function main()
     -- Add other events as needed
 
     if ns.config.Get("debugMode") then
-        ns.config.DebugPrint("Core module loaded.")
+        ns.config.DebugPrint("RoachSFX loaded. Hooray!")
     end
 end
 
