@@ -85,16 +85,26 @@ jobs:
       - name: Build zip package
         if: steps.extract.outputs.changed == 'true'
         run: |
-          # Prepare package folder containing exactly the addon folder and required files
+          set -e
+          # Remove any previous package folder
           rm -rf package || true
-          mkdir -p package/${{ env.ADDON_DIR }}
-          cp roach-sfx.toc package/${{ env.ADDON_DIR }}/
-          cp -r src package/${{ env.ADDON_DIR }}/
-          cp -r sounds package/${{ env.ADDON_DIR }}/
 
-          # Create zip named roach-sfx-<version>.zip at repository root
+          # Create exact addon folder name inside package
+          mkdir -p package/roach-sfx
+
+          # Copy only the required files/folders
+          cp roach-sfx.toc package/roach-sfx/
+          cp -r src package/roach-sfx/
+          cp -r sounds package/roach-sfx/
+
+          # Ensure no extra files slipped in
+          rm -rf package/roach-sfx/.github || true
+          rm -rf package/roach-sfx/pic* || true
+
+          # Create zip file named with version, but containing a root folder named "roach-sfx"
           cd package
-          zip -r "../${{ env.ADDON_DIR }}-${{ steps.extract.outputs.toc_version }}.zip" "${{ env.ADDON_DIR }}"
+          zip -r "../roach-sfx-${{ steps.extract.outputs.toc_version }}.zip" "roach-sfx"
+
 
       - name: Create GitHub Release and upload zip
         if: steps.extract.outputs.changed == 'true'
