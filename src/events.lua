@@ -111,7 +111,10 @@ end
 
 -- Handler for UNIT_HEALTH_FREQUENT to detect deaths in Hardcore realms
 local function OnUnitHealthFrequent(unit)
-    --if not ns.config.Get("hardcore") then return end
+    -- Disable death detection handlers if not in a Hardcore realm
+    -- (leaving group when dead in non-hardcore is roaching)
+    if not ns.config.Get("hardcore") then return end
+
     if not unit or not ns.roster.IsUnitInGroup(unit) then return end
     if not UnitExists(unit) then return end
     if not (UnitIsDeadOrGhost(unit) or UnitHealth(unit) <= 0) then
@@ -132,6 +135,10 @@ end
 
 -- Paired with OnUnitHealthFrequent to catch all deaths
 local function OnCombatLogEventUnfiltered()
+    -- Disable death detection handlers if not in a Hardcore realm
+    -- (leaving group when dead in non-hardcore is roaching)
+    if not ns.config.Get("hardcore") then return end
+
     local _, subEvent, _, _, _, _, _, destGUID, destName, _, _, _ = CombatLogGetCurrentEventInfo()
 
     if not subEvent == "UNIT_DIED" then
@@ -148,13 +155,6 @@ local function OnCombatLogEventUnfiltered()
     if ns.config.Get("debugMode") then
         ns.config.DebugPrint(destName .. " has died (from UNIT_DIED event in COMBAT_LOG_EVENT_UNFILTERED)")
     end
-end
-
--- Disable death detection handlers if not in a Hardcore realm
--- (leaving group when dead on non-hardcore is roaching if the fight goes on!)
-if not ns.config.Get("hardcore") then
-    OnCombatLogEventUnfiltered = function() end
-    OnUnitHealthFrequent = function() end
 end
 
 -- Main event handler - routes events to specific handlers
