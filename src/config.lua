@@ -164,7 +164,7 @@ local function BuildSettingsCategory()
     do
         local variable = "stripServer"
         local name = "Strip Server"
-        local tooltip = "Strip the server name away from a player's name in messages."
+        local tooltip = "No server name in messages."
         local defaultValue = RoachSFXDB.stripServer
 
         local setting = RegisterSimpleSetting(category, variable, name, type(defaultValue), defaultValue)
@@ -186,7 +186,7 @@ local function BuildSettingsCategory()
     do
         local variable = "debugMode"
         local name = "Debug Mode"
-        local tooltip = "Spam your chat. Why not?"
+        local tooltip = "Spam your chat with useless stuff. Why not?"
         local defaultValue = RoachSFXDB.debugMode
 
         local setting = RegisterSimpleSetting(category, variable, name, type(defaultValue), defaultValue)
@@ -197,7 +197,7 @@ local function BuildSettingsCategory()
     do
         local variable = "RoachSFX_DemoTrigger" -- internal id only
         local name = "Demo"
-        local tooltip = "Do not click!!! DANGEROUS!!!"
+        local tooltip = "Check if it works. (requires sound or message enabled, respects cooldown time)"
         local defaultValue = false
 
         -- GetValue always returns false so the control never stores state.
@@ -212,6 +212,39 @@ local function BuildSettingsCategory()
                 M.DebugPrint("Demo button clicked. Hooray!")
                 ns.message.ShowRoachWarning(UnitName("player"))
                 ns.sound.PlayRandomRoachSound()
+            end
+            -- Do not store anything; GetValue returning false ensures UI resets.
+        end
+
+        -- Register a proxy setting (no variableTbl needed)
+        local setting = Settings.RegisterProxySetting(category, variable, type(defaultValue), name, defaultValue,
+            GetValue,
+            SetValue)
+        -- Use a checkbox as a momentary 'button'
+        Settings.CreateCheckbox(category, setting, tooltip)
+    end
+
+    -- Funny button using a proxy setting + checkbox (works even if CreateCustomControl is absent)
+    do
+        local variable = "RoachSFX_FunnyTrigger" -- internal id only
+        local name = "DO NOT CLICK."
+        local tooltip = "DANGER!!!!!"
+        local defaultValue = false
+
+        -- GetValue always returns false so the control never stores state.
+        local function GetValue()
+            return false
+        end
+
+        -- SetValue is called when the user toggles the checkbox.
+        -- We run the demo action if present. No persistent storage.
+        local function SetValue(value)
+            if value then
+                M.DebugPrint("Funny button clicked. Hooray!")
+                ns.sound.PlayFunnySoundIn()
+            else
+                M.DebugPrint("Funny button unclicked...")
+                ns.sound.PlayFunnySoundOut()
             end
             -- Do not store anything; GetValue returning false ensures UI resets.
         end

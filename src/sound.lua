@@ -19,12 +19,17 @@ local soundFiles = {
     "why_am_i_walking.ogg",
     "now_we_are_gonna_wait.ogg",
     "i_worked_at_blizzard_1.ogg",
+    "tuco_get_out.ogg",
+    "discord_leave.ogg",
+    "sinistar_run_coward.ogg",
+    "terminator_2_hasta_la_vista_baby.ogg",
+    "danger.ogg",
     -- Add more sound files as needed
 }
 
 local soundFilesCt = #soundFiles
 
--- to avoid repeating
+-- To avoid repeating
 local lastPlayedIndex = 0
 
 -- Cooldown tracking
@@ -61,6 +66,33 @@ function M.PlayRandomRoachSound()
 
     -- Update last played time
     lastPlayedTime = currentTime
+
+    -- Update last played index
+    lastPlayedIndex = randomIndex
 end
+
+function M.PlayFunnySoundIn()
+    local soundFile = "TADA.ogg"
+    local soundPath = "Interface\\AddOns\\roach-sfx\\sounds\\" .. soundFile
+    PlaySoundFile(soundPath, "Master")
+end
+
+function M.PlayFunnySoundOut()
+    local soundFile = "sad_crowd_aww.ogg"
+    local soundPath = "Interface\\AddOns\\roach-sfx\\sounds\\" .. soundFile
+    PlaySoundFile(soundPath, "Master")
+end
+
+-- Absolute requirement
+local function OneInAMillion()
+    local chance = fastrandom(1000000)
+    if chance == 69420 then
+        local soundFile = "not_rick_roll_trust_me.ogg"
+        local soundPath = "Interface\\AddOns\\roach-sfx\\sounds\\" .. soundFile
+        PlaySoundFile(soundPath, "Master")
+    end
+end
+
+OneInAMillion() -- Never delete this line, very important
 
 ns.sound = M
