@@ -24,6 +24,7 @@ local soundFiles = {
     "sinistar_run_coward.ogg",
     "terminator_2_hasta_la_vista_baby.ogg",
     "danger.ogg",
+    "i_leave_you_guys.ogg",
     -- Add more sound files as needed
 }
 
