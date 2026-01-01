@@ -111,9 +111,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Resolve CurseForge game version ID for Classic
+      - name: Resolve CurseForge game version IDs for Classic (robust)
         if: steps.extract.outputs.changed == 'true'
-        id: resolve_cf_game_version
+        id: resolve_cf_game_versions
         env:
           CF_TOKEN: ${{ secrets.CF_API_TOKEN }}
         run: |
@@ -121,98 +121,92 @@ jobs:
 
           endpoint="wow"
           token="${CF_TOKEN}"
-          url="https://${endpoint}.curseforge.com/api/game/version-types?token=${token}"
+          url="https://${endpoint}.curseforge.com/api/game/versions?token=${token}"
 
           echo "Requesting: $url"
 
           tmpfile="$(mktemp)"
-          # write response into tmpfile and capture HTTP code
           http_code="$(curl -sS -w '%{http_code}' -o "$tmpfile" "$url" || true)"
 
           if [ "$http_code" != "200" ]; then
             echo "CurseForge request failed (HTTP $http_code). Response (first 4000 chars):"
             head -c 4000 "$tmpfile" || true
             rm -f "$tmpfile" || true
-            echo "game_version_id=" >> $GITHUB_OUTPUT
+            echo "game_versions_ids=" >> $GITHUB_OUTPUT
             exit 1
           fi
 
           if [ ! -s "$tmpfile" ]; then
-            echo "Empty response from CurseForge version-types endpoint." >&2
+            echo "Empty response from CurseForge versions endpoint." >&2
             rm -f "$tmpfile" || true
-            echo "game_version_id=" >> $GITHUB_OUTPUT
+            echo "game_versions_ids=" >> $GITHUB_OUTPUT
             exit 1
           fi
 
-          # Parse file with Python: accept either a list or an object containing "data"
-          cf_id="$(python3 - <<'PY'
-          import json, os, sys
-          fp = os.environ.get('TMPFILE', '')
-          if not fp:
-            # fallback: first CLI arg if provided
-            if len(sys.argv) > 1:
-              fp = sys.argv[1]
-            else:
-              sys.exit(0)
+          # Parse JSON safely and collect IDs whose name/slug indicates Classic/Era/Hardcore
+          ids="$(python3 - "$tmpfile" <<'PY'
+          import sys, json
+          fp = sys.argv[1]
           try:
             with open(fp, 'r', encoding='utf-8') as f:
-              obj = json.load(f)
+              data = json.load(f)
           except Exception:
             sys.exit(0)
 
-          # Normalize to list
-          if isinstance(obj, dict):
-            data = obj.get('data') or obj.get('results') or obj.get('versionTypes') or []
-          elif isinstance(obj, list):
-            data = obj
+          # data may be a list or a dict containing 'data' or 'results'
+          if isinstance(data, dict):
+            candidates = data.get('data') or data.get('results') or data.get('versions') or []
+          elif isinstance(data, list):
+            candidates = data
           else:
-            data = []
+            candidates = []
 
-          # Look for slug == 'classic' first, then name contains 'classic'
-          for item in data:
-            try:
-              slug = str(item.get('slug','') or '').lower()
-              if slug == 'classic':
-                print(item.get('id',''))
-                sys.exit(0)
-            except Exception:
-              continue
-
-          for item in data:
+          found = []
+          for item in candidates:
             try:
               name = str(item.get('name','') or '').lower()
-              if 'classic' in name:
-                print(item.get('id',''))
-                sys.exit(0)
+              slug = str(item.get('slug','') or '').lower()
+              if slug == 'classic' or 'classic' in name or 'era' in name or 'hardcore' in name:
+                vid = item.get('id')
+                if vid is not None:
+                  found.append(str(vid))
             except Exception:
               continue
 
-          # nothing found
+          # Deduplicate while preserving order
+          seen = set()
+          out = []
+          for x in found:
+            if x not in seen:
+              seen.add(x)
+              out.append(x)
+
+          if out:
+            print(','.join(out))
           sys.exit(0)
           PY
-          "TMPFILE="$tmpfile" )"
+          )"
 
-          # clean up temp file
           rm -f "$tmpfile" || true
 
-          if [ -z "$cf_id" ]; then
-            echo "Could not resolve a CurseForge game version id for 'Classic' on endpoint ${endpoint}" >&2
-            echo "game_version_id=" >> $GITHUB_OUTPUT
+          if [ -z "$ids" ]; then
+            echo "Could not resolve any CurseForge game version ids for 'Classic' on endpoint ${endpoint}" >&2
+            echo "game_versions_ids=" >> $GITHUB_OUTPUT
             exit 1
           fi
 
-          echo "game_version_id=$cf_id" >> $GITHUB_OUTPUT
-          echo "Resolved CurseForge game version id: $cf_id"
+          echo "game_versions_ids=$ids" >> $GITHUB_OUTPUT
+          echo "Resolved CurseForge game version ids: $ids"
 
-      - name: Upload package to CurseForge (use numeric game version id)
+      - name: Upload package to CurseForge (use numeric game version ids)
         if: steps.extract.outputs.changed == 'true'
         uses: itsmeow/curseforge-upload@v3.1.2
         with:
           file_path: "roach-sfx-${{ steps.extract.outputs.toc_version }}.zip"
           project_id: "1417993"
           game_endpoint: "wow"
-          # Use the resolved numeric game version id to ensure Classic
-          game_versions: ${{ steps.resolve_cf_game_version.outputs.game_version_id }}
+          # Pass numeric IDs resolved above (comma separated)
+          game_versions: ${{ steps.resolve_cf_game_versions.outputs.game_versions_ids }}
           release_type: ${{ steps.extract.outputs.cf_release_type }}
           display_name: "roach-sfx ${{ steps.extract.outputs.toc_version }}"
           changelog: "See GitHub release ${{ steps.extract.outputs.tag_name }}"
