@@ -119,9 +119,6 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Use the site-specific API (itsmeow/curseforge-upload expects token generated from
-          # https://www.curseforge.com/account/api-tokens). We query the version-types endpoint
-          # for the wow endpoint (e.g. https://wow.curseforge.com/api/game/version-types?token=TOKEN)
           endpoint="wow"
           token="${CF_TOKEN}"
           url="https://${endpoint}.curseforge.com/api/game/version-types?token=${token}"
@@ -129,50 +126,73 @@ jobs:
           echo "Requesting: $url"
 
           tmpfile="$(mktemp)"
-          http_code=$(curl -sS -w "%{http_code}" -o "$tmpfile" "$url" || true)
+          # write response into tmpfile and capture HTTP code
+          http_code="$(curl -sS -w '%{http_code}' -o "$tmpfile" "$url" || true)"
 
           if [ "$http_code" != "200" ]; then
-            echo "CurseForge version-types request failed (HTTP $http_code). Response (first 4000 chars):"
+            echo "CurseForge request failed (HTTP $http_code). Response (first 4000 chars):"
             head -c 4000 "$tmpfile" || true
-            echo "" >&2
+            rm -f "$tmpfile" || true
             echo "game_version_id=" >> $GITHUB_OUTPUT
             exit 1
           fi
 
-          # Ensure file is non-empty
           if [ ! -s "$tmpfile" ]; then
             echo "Empty response from CurseForge version-types endpoint." >&2
+            rm -f "$tmpfile" || true
             echo "game_version_id=" >> $GITHUB_OUTPUT
             exit 1
           fi
 
-          # Parse JSON file safely: prefer slug == 'classic', otherwise name contains 'classic'
-          cf_id=$(python3 - <<'PY'
-          import json,sys
-          fp = sys.argv[1]
+          # Parse file with Python: accept either a list or an object containing "data"
+          cf_id="$(python3 - <<'PY'
+          import json, os, sys
+          fp = os.environ.get('TMPFILE', '')
+          if not fp:
+            # fallback: first CLI arg if provided
+            if len(sys.argv) > 1:
+              fp = sys.argv[1]
+            else:
+              sys.exit(0)
           try:
             with open(fp, 'r', encoding='utf-8') as f:
-              data = json.load(f)
+              obj = json.load(f)
           except Exception:
             sys.exit(0)
-          # Data is expected as a list of objects with 'id','name','slug' etc.
+
+          # Normalize to list
+          if isinstance(obj, dict):
+            data = obj.get('data') or obj.get('results') or obj.get('versionTypes') or []
+          elif isinstance(obj, list):
+            data = obj
+          else:
+            data = []
+
+          # Look for slug == 'classic' first, then name contains 'classic'
           for item in data:
-            slug = str(item.get('slug','') or '').lower()
-            if slug == 'classic':
-              print(item.get('id',''))
-              sys.exit(0)
+            try:
+              slug = str(item.get('slug','') or '').lower()
+              if slug == 'classic':
+                print(item.get('id',''))
+                sys.exit(0)
+            except Exception:
+              continue
+
           for item in data:
-            name = str(item.get('name','') or '').lower()
-            if 'classic' in name:
-              print(item.get('id',''))
-              sys.exit(0)
-          # fallback: nothing
+            try:
+              name = str(item.get('name','') or '').lower()
+              if 'classic' in name:
+                print(item.get('id',''))
+                sys.exit(0)
+            except Exception:
+              continue
+
+          # nothing found
           sys.exit(0)
           PY
-          "$tmpfile"
-          )
+          "TMPFILE="$tmpfile" )"
 
-          # clean up
+          # clean up temp file
           rm -f "$tmpfile" || true
 
           if [ -z "$cf_id" ]; then
