@@ -1,7 +1,7 @@
 ![CurseForge Downloads](https://img.shields.io/curseforge/dt/1417993?style=plastic&logoSize=auto&label=total%20downloads&color=50C821)
-![GitHub Release](https://img.shields.io/github/v/release/Surfingnet/roach-sfx?include_prereleases&style=plastic&logoSize=auto&label=latest%20release&color=50C821)
+![GitHub Release](https://img.shields.io/github/v/release/Surfingnet/roach-sfx?style=plastic&logoSize=auto&label=latest%20release&color=49B720&link=https%3A%2F%2Fgithub.com%2FSurfingnet%2Froach-sfx%2Fcommits%2Fmain%2F)
 ![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/Surfingnet/roach-sfx?style=plastic&logoSize=auto&color=1283C3&link=https%3A%2F%2Fgithub.com%2FSurfingnet%2Froach-sfx%2Fissues)
-![GitHub commits since latest release](https://img.shields.io/github/commits-since/Surfingnet/roach-sfx/latest?include_prereleases&style=plastic&logoSize=auto&label=commits%20after%20release&color=1283C3&link=https%3A%2F%2Fgithub.com%2FSurfingnet%2Froach-sfx%2Fcommits%2Fmain%2F)
+![GitHub commits since latest release](https://img.shields.io/github/commits-since/Surfingnet/roach-sfx/latest?style=plastic&logoSize=auto&color=1283C3&link=https%3A%2F%2Fgithub.com%2FSurfingnet%2Froach-sfx%2Fcommits%2Fmain%2F)
 
 ## Features: Roach SFX, The Coward Detector
 
