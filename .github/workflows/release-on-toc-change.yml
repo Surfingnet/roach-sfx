@@ -51,7 +51,7 @@ jobs:
             prerelease="true"
           elif printf "%s" "$lc_version" | grep -q 'beta'; then
             channel="beta"
-            prerelease="true"
+            prerelease="false"
           fi
 
           if [ "$channel" = "stable" ]; then
