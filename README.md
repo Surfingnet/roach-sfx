@@ -1,4 +1,9 @@
-## Description: Roach SFX, the coward detector
+![CurseForge Downloads](https://img.shields.io/curseforge/dt/1417993?style=plastic&logoSize=auto&label=total%20downloads&color=50C821)
+![GitHub Release](https://img.shields.io/github/v/release/Surfingnet/roach-sfx?include_prereleases&style=plastic&logoSize=auto&label=latest%20release&color=50C821)
+![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/Surfingnet/roach-sfx?style=plastic&logoSize=auto&color=1283C3&link=https%3A%2F%2Fgithub.com%2FSurfingnet%2Froach-sfx%2Fissues)
+![GitHub commits since latest release](https://img.shields.io/github/commits-since/Surfingnet/roach-sfx/latest?include_prereleases&style=plastic&logoSize=auto&label=commits%20after%20release&color=1283C3&link=https%3A%2F%2Fgithub.com%2FSurfingnet%2Froach-sfx%2Fcommits%2Fmain%2F)
+
+## Features: Roach SFX, The Coward Detector
 
 - If a player in your group (party or raid) leaves the group or starts using a teleportation spell while at least one group member is in combat, you will be notified that they are roaching out, via a funny sound, a raid warning-style message, or both.
 - You can choose whether to detect roaches everywhere or only in PvE instances (dungeons and raids).
@@ -9,7 +14,7 @@
 - The API does not allow the code to differentiate between a player who leaves the group voluntarily and a player who is kicked, so both will trigger the roach detector.
 - For hardcore players, anyone who disconnects while dead will not trigger detection, unless it is an exceptional case where the Blizzard API fails to properly report the death to the client.
 
-## Note: Tell me what you think
+## Notes: Tell me what you think
 
 - If you have a good idea for a funny message or sound, leave a comment on CurseForge.
 - If something is not working correctly, open an issue on GitHub.
@@ -25,4 +30,4 @@
 
 
 ## License
- <p xmlns:cc="http://creativecommons.org/ns#" xmlns:dct="http://purl.org/dc/terms/"><a property="dct:title" rel="cc:attributionURL" href="https://github.com/Surfingnet/roach-sfx">Roach SFX</a> by <a rel="cc:attributionURL dct:creator" property="cc:attributionName" href="https://github.com/Surfingnet">Maxime Ghazarian</a> is licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/?ref=chooser-v1" target="_blank" rel="license noopener noreferrer" style="display:inline-block;">CC BY-NC-SA 4.0<img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg?ref=chooser-v1" alt=""><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/by.svg?ref=chooser-v1" alt=""><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/nc.svg?ref=chooser-v1" alt=""><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/sa.svg?ref=chooser-v1" alt=""></a></p> 
+ <p xmlns:cc="http://creativecommons.org/ns#" xmlns:dct="http://purl.org/dc/terms/"><a property="dct:title" rel="cc:attributionURL" href="https://github.com/Surfingnet/roach-sfx">Roach SFX</a> by <a rel="cc:attributionURL dct:creator" property="cc:attributionName" href="https://github.com/Surfingnet">Maxime Ghazarian</a> is licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/?ref=chooser-v1" target="_blank" rel="license noopener noreferrer" style="display:inline-block;">CC BY-NC-SA 4.0<img style="height:16px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg?ref=chooser-v1" alt=""><img style="height:16px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/by.svg?ref=chooser-v1" alt=""><img style="height:16px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/nc.svg?ref=chooser-v1" alt=""><img style="height:16px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/sa.svg?ref=chooser-v1" alt=""></a></p> 
