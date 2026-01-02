@@ -81,6 +81,39 @@ jobs:
           git tag -a "${{ steps.extract.outputs.tag_name }}" -m "Release ${{ steps.extract.outputs.toc_version }}"
           git push origin "${{ steps.extract.outputs.tag_name }}"
 
+      - name: Build changelog from commits since previous tag
+        id: build_changelog
+        run: |
+          set -euo pipefail
+
+          # new tag created earlier
+          NEW_TAG="${{ steps.extract.outputs.tag_name }}"
+
+          # find previous tag (exclude the new tag). If none, use entire history.
+          PREV_TAG=$(git for-each-ref --sort=-creatordate --format '%(refname:short)' refs/tags | grep -v "^${NEW_TAG}$" || true)
+          PREV_TAG=$(printf "%s" "$PREV_TAG" | head -n1 || true)
+
+          if [ -n "$PREV_TAG" ]; then
+            # commits strictly after previous tag up to HEAD (includes the commit that bumped toc)
+            RAW_COMMITS=$(git log --pretty=format:%s "${PREV_TAG}"..HEAD)
+          else
+            # no previous tag found: take all commits reachable from HEAD
+            RAW_COMMITS=$(git log --pretty=format:%s -n 50 HEAD)
+          fi
+
+          # Build markdown list: one bullet per non-empty commit-subject line
+          if [ -z "${RAW_COMMITS}" ]; then
+            BODY="No changelog available."
+          else
+            # remove empty lines, prefix "- " to each line, preserve newlines
+            BODY=$(printf "%s\n" "${RAW_COMMITS}" | sed '/^[[:space:]]*$/d' | sed 's/^/- /')
+          fi
+
+          # Export multiline output using environment file (safe for newlines)
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          printf "%s\n" "$BODY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Build zip package
         if: steps.extract.outputs.changed == 'true'
         run: |
@@ -125,6 +158,6 @@ jobs:
           game_versions: ${{ env.CF_GAME_VERSION_IDS }}
           release_type: ${{ steps.extract.outputs.cf_release_type }}
           display_name: "roach-sfx ${{ steps.extract.outputs.toc_version }}"
-          changelog: "See GitHub release ${{ steps.extract.outputs.tag_name }}"
+          changelog: ${{ steps.build_changelog.outputs.changelog }}
           changelog_type: "markdown"
           token: ${{ secrets.CF_API_TOKEN }}
