@@ -20,23 +20,17 @@ local function MakeExactPattern(formatString)
     return "^" .. s .. "$"
 end
 
--- List of candidate constants (only these will be used)
-local leaverConsts = {
-    "ERR_LEFT_GROUP_S",
-    "ERR_LEAVE_GROUP_S",
-    "ERR_RAID_MEMBER_REMOVED_S",
-    "ERR_LEFT_RAID_MEMBER_S",
+-- List of constants (only these will be used)
+local leaverConsts = { -- messages indicating that somebody has left
+    "ERR_RAID_MEMBER_REMOVED_S",--ok
+    "ERR_LEFT_GROUP_S",--ok
 }
 local selfConsts = { -- messages indicating that the client has left
-    "ERR_LEFT_GROUP",
-    "YOU_LEFT_PARTY",
-    "YOU_LEFT_RAID",
-    "ERR_LEFT_RAID",
-    "ERR_LEAVE_GROUP",  -- variant possible
+    "ERR_RAID_YOU_LEFT",--ok
+    "ERR_LEFT_GROUP_YOU",--ok
 }
 local disbandConsts = { -- messages indicating that the group has been disbanded
-    "ERR_GROUP_DISBANDED",
-    "ERR_RAID_DISBANDED",
+    "ERR_GROUP_DISBANDED",--ok
 }
 
 local leaverPatterns = {}
