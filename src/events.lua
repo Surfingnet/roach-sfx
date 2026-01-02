@@ -19,6 +19,26 @@ local function HandleRoaching(roacherName)
     ns.message.ShowRoachWarning(roacherName)
 end
 
+---returns true if checks relevant to all events are passed
+---@return boolean
+local function CrossEventChecks()
+    -- Check if we should work outside instances
+    if not ns.instance.IsPlayerInPvEInstance() and not ns.config.Get("enableOutsideInstances") then
+        ns.config.DebugPrint("not in an instance")
+        return false
+    end
+
+    -- Check if someone is in combat
+    if not ns.combat.IsAnyGroupMemberInCombat() then
+        ns.config.DebugPrint("combat not detected")
+        return false
+    else
+        ns.config.DebugPrint("combat detected")
+    end
+
+    return true
+end
+
 -- Specific event handlers
 local function OnPlayerEnteringWorld()
     -- Handle player entering world
@@ -31,11 +51,6 @@ local function OnUnitSpellcastChannelStart(unitTarget, _castGUID, spellID)
     -- Handle teleportation spells cast by group members as potential roaching
     -- if mob then ignore
     if not UnitIsPlayer(unitTarget) then return end
-
-    -- Check if we should work outside instances
-    if not ns.instance.IsPlayerInPvEInstance() and not ns.config.Get("enableOutsideInstances") then
-        return
-    end
 
     -- if not in group then ignore
     if not ns.roster.IsUnitInGroup(unitTarget) then
@@ -50,14 +65,10 @@ local function OnUnitSpellcastChannelStart(unitTarget, _castGUID, spellID)
         return
     end
 
-    -- Check if someone is in combat
-    if ns.combat.IsAnyGroupMemberInCombat() then
-        ns.config.DebugPrint("combat detected")
-        local casterName = UnitName(unitTarget)
-        HandleRoaching(casterName)
-    else
-        ns.config.DebugPrint("combat not detected")
-    end
+    if not CrossEventChecks() then return end
+
+    local casterName = UnitName(unitTarget)
+    HandleRoaching(casterName)
 end
 
 local function OnMsgSystem(event, msg, ...)
@@ -66,16 +77,18 @@ local function OnMsgSystem(event, msg, ...)
         local selfOrDisband = ns.chat_parser.DetectSelfOrDisband(event, msg, ...)
 
         if selfOrDisband == "disband" then
+            ns.config.DebugPrint("Group disbanded")
+            if not CrossEventChecks() then return end
             -- TODO: get the real leader name and remember it
             HandleRoaching("the leader")
-            ns.config.DebugPrint("Group disbanded")
             ns.history.ClearHistory()
             if ns.config.Get("hardcore") then
                 ns.hardcore.clearDeathLog()
             end
         elseif selfOrDisband == "self" then
-            HandleRoaching(UnitName("player"))
             ns.config.DebugPrint("You left the group")
+            if not CrossEventChecks() then return end
+            HandleRoaching(UnitName("player"))
             ns.history.ClearHistory()
             if ns.config.Get("hardcore") then
                 ns.hardcore.clearDeathLog()
@@ -88,18 +101,7 @@ local function OnMsgSystem(event, msg, ...)
     -- Debug: print all leavers regardless of combat
     ns.config.DebugPrint(leaverName .. " left the group")
 
-    -- Check if we should work outside instances
-    if not ns.instance.IsPlayerInPvEInstance() and not ns.config.Get("enableOutsideInstances") then
-        return
-    end
-
-    -- Check if someone is in combat
-    if not ns.combat.IsAnyGroupMemberInCombat() then
-        ns.config.DebugPrint("combat not detected")
-        return
-    else
-        ns.config.DebugPrint("combat detected")
-    end
+    if not CrossEventChecks() then return end
 
     if ns.config.Get("hardcore") and ns.hardcore.IsInDeathLog(leaverName) then
         ns.config.DebugPrint("he's dead anyway")
