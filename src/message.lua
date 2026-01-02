@@ -32,7 +32,7 @@ local roachQuotesCt = #roachQuotes
 
 -- Local function to strip server from name
 local function StripServer(name)
-    return name:gsub("-.*", "") -- Remove everything after first dash
+    return name:match("^[^-]+") or name
 end
 
 ---Get a random roach message with the player's name inserted.
