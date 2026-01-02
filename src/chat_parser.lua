@@ -7,9 +7,19 @@ local M = ns.chat_parser
 -- Constructs a secure Lua pattern for Blizzard strings containing "%s"
 local function MakeNamePattern(formatString)
     local PH = "<<<PLAYERNAME>>>"
-    local s = formatString:gsub("%%s", PH)
+    local s = formatString
+
+    -- handle positional specifiers like %1$s, %2$s, ...
+    s = s:gsub("%%(%d+)%$s", PH)
+    -- handle simple %s
+    s = s:gsub("%%s", PH)
+
+    -- escape magic characters for Lua patterns
     s = s:gsub("([%^%$%(%)%%.%[%]%*%+%-%?])", "%%%1")
-    s = s:gsub(PH, "(%S+)")
+
+    -- allow any characters (including spaces / multibyte) for the captured name
+    s = s:gsub(PH, "(.+)")
+
     return "^" .. s .. "$"
 end
 
@@ -18,6 +28,11 @@ local function MakeExactPattern(formatString)
     local s = formatString
     s = s:gsub("([%^%$%(%)%%.%[%]%*%+%-%?])", "%%%1")
     return "^" .. s .. "$"
+end
+
+-- trim leading/trailing spaces just in case
+local function TrimSpaces(name)
+    return name:match("^%s*(.-)%s*$")
 end
 
 -- List of constants (only these will be used)
@@ -64,7 +79,7 @@ function M.DetectLeaverFromSystem(event, msg, ...)
     for _, pat in ipairs(leaverPatterns) do
         local name = msg:match(pat)
         if name and name ~= "" then
-            return name
+            return TrimSpaces(name)
         end
     end
 end

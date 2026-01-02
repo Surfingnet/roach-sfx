@@ -100,9 +100,7 @@ local function OnMsgSystem(event, msg, ...)
 
     -- Debug: print all leavers regardless of combat
     ns.config.DebugPrint(leaverName .. " left the group")
-
     if not CrossEventChecks() then return end
-
     if ns.config.Get("hardcore") and ns.hardcore.IsInDeathLog(leaverName) then
         ns.config.DebugPrint("he's dead anyway")
         return
