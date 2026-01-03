@@ -39,11 +39,6 @@ local function CrossEventChecks()
     return true
 end
 
--- Specific event handlers
-local function OnPlayerEnteringWorld()
-    -- Handle player entering world
-end
-
 ---@diagnostic disable-next-line: unused-local
 local function OnUnitSpellcastChannelStart(unitTarget, _castGUID, spellID)
     ns.config.DebugPrint(unitTarget .. " " .. tostring(spellID))
@@ -165,14 +160,14 @@ function M.OnEvent(event, ...)
         OnCombatLogEventUnfiltered()
     elseif event == "UNIT_HEALTH_FREQUENT" then
         OnUnitHealthFrequent(...)
-    elseif event == "UNIT_SPELLCAST_CHANNEL_START" then
-        OnUnitSpellcastChannelStart(...)
+        --elseif event == "UNIT_SPELLCAST_CHANNEL_START" then
+        --OnUnitSpellcastChannelStart(...)
     elseif event == "UNIT_SPELLCAST_START" then
         OnUnitSpellcastChannelStart(...)
     elseif event == "CHAT_MSG_SYSTEM" then
         OnMsgSystem(event, ...)
-    elseif event == "PLAYER_ENTERING_WORLD" then
-        OnPlayerEnteringWorld()
+        --elseif event == "PLAYER_ENTERING_WORLD" then
+        --OnPlayerEnteringWorld()
     end
     -- Add more event routing as needed
 end
