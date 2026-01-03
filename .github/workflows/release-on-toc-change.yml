@@ -88,24 +88,69 @@ jobs:
 
           # new tag created earlier
           NEW_TAG="${{ steps.extract.outputs.tag_name }}"
+          PRERELEASE="${{ steps.extract.outputs.prerelease }}"
 
-          # find previous tag (exclude the new tag). If none, use entire history.
-          PREV_TAG=$(git for-each-ref --sort=-creatordate --format '%(refname:short)' refs/tags | grep -v "^${NEW_TAG}$" || true)
-          PREV_TAG=$(printf "%s" "$PREV_TAG" | head -n1 || true)
+          # Helper: find previous tag (exclude NEW_TAG). If none, use recent history.
+          find_prev_tag() {
+            local prev
+            prev=$(git for-each-ref --sort=-creatordate --format '%(refname:short)' refs/tags | grep -v "^${NEW_TAG}$" || true)
+            prev=$(printf "%s" "$prev" | head -n1 || true)
+            printf "%s" "$prev"
+          }
 
-          if [ -n "$PREV_TAG" ]; then
-            # commits strictly after previous tag up to HEAD (includes the commit that bumped toc)
-            RAW_COMMITS=$(git log --pretty=format:%s "${PREV_TAG}"..HEAD)
+          RAW_COMMITS=""
+
+          if [ "${PRERELEASE}" = "true" ]; then
+            # Alpha: keep previous behaviour => commits since previous tag
+            PREV_TAG=$(find_prev_tag)
+            if [ -n "$PREV_TAG" ]; then
+              RAW_COMMITS=$(git log --pretty=format:%s "${PREV_TAG}"..HEAD)
+            else
+              RAW_COMMITS=$(git log --pretty=format:%s -n 50 HEAD)
+            fi
           else
-            # no previous tag found: take all commits reachable from HEAD
-            RAW_COMMITS=$(git log --pretty=format:%s -n 50 HEAD)
+            # Release (stable or beta): try to find last non-prerelease GitHub release tag
+            # Query GitHub Releases (public API). No auth required for public repos.
+            API_URL="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases?per_page=100"
+            # Fetch and parse safely; pass NEW_TAG as first arg to python
+            PREV_RELEASE_TAG=$(curl -sS "${API_URL}" | python3 - "${NEW_TAG}" <<'PY'
+            import sys, json
+            new_tag = sys.argv[1] if len(sys.argv) > 1 else ""
+            try:
+                data = json.load(sys.stdin)
+            except Exception:
+                sys.exit(0)
+            # data expected to be a list of releases ordered by created_at desc
+            for r in data:
+                tag = r.get("tag_name") or ""
+                # skip the release that matches the new tag
+                if tag == new_tag:
+                    continue
+                # choose only non-prerelease releases
+                if not r.get("prerelease", False):
+                    print(tag)
+                    sys.exit(0)
+            # nothing found
+            sys.exit(0)
+            PY
+            )
+            if [ -n "$PREV_RELEASE_TAG" ]; then
+              RAW_COMMITS=$(git log --pretty=format:%s "${PREV_RELEASE_TAG}"..HEAD)
+            else
+              # fallback: use previous tag logic (same as alpha case)
+              PREV_TAG=$(find_prev_tag)
+              if [ -n "$PREV_TAG" ]; then
+                RAW_COMMITS=$(git log --pretty=format:%s "${PREV_TAG}"..HEAD)
+              else
+                RAW_COMMITS=$(git log --pretty=format:%s -n 50 HEAD)
+              fi
+            fi
           fi
 
           # Build markdown list: one bullet per non-empty commit-subject line
           if [ -z "${RAW_COMMITS}" ]; then
             BODY="No changelog available."
           else
-            # remove empty lines, prefix "- " to each line, preserve newlines
             BODY=$(printf "%s\n" "${RAW_COMMITS}" | sed '/^[[:space:]]*$/d' | sed 's/^/- /')
           fi
 
