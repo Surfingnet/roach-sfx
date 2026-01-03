@@ -264,7 +264,6 @@ local function BuildSettingsCategory()
     -- Register the settings category so it appears in Interface Options
     Settings.RegisterAddOnCategory(category)
 
-    M.ready = true
 end
 
 local evt = CreateFrame("Frame")
@@ -274,6 +273,7 @@ evt:SetScript("OnEvent", function(self, event, ...)
         InitializeSavedVars()
         BuildSettingsCategory()
         self:UnregisterEvent("PLAYER_LOGIN")
+        M.ready = true
     end
 end)
 
