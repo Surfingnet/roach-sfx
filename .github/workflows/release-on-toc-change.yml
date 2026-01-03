@@ -110,30 +110,11 @@ jobs:
             fi
           else
             # Release (stable or beta): try to find last non-prerelease GitHub release tag
-            # Query GitHub Releases (public API). No auth required for public repos.
             API_URL="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases?per_page=100"
-            # Fetch and parse safely; pass NEW_TAG as first arg to python
-            PREV_RELEASE_TAG=$(curl -sS "${API_URL}" | python3 - "${NEW_TAG}" <<'PY'
-            import sys, json
-            new_tag = sys.argv[1] if len(sys.argv) > 1 else ""
-            try:
-                data = json.load(sys.stdin)
-            except Exception:
-                sys.exit(0)
-            # data expected to be a list of releases ordered by created_at desc
-            for r in data:
-                tag = r.get("tag_name") or ""
-                # skip the release that matches the new tag
-                if tag == new_tag:
-                    continue
-                # choose only non-prerelease releases
-                if not r.get("prerelease", False):
-                    print(tag)
-                    sys.exit(0)
-            # nothing found
-            sys.exit(0)
-            PY
-            )
+
+            # Fetch releases JSON and extract the first non-prerelease tag that is not NEW_TAG
+            PREV_RELEASE_TAG=$(curl -sS "${API_URL}" || true | jq -r --arg newtag "$NEW_TAG" '.[] | select(.tag_name != $newtag) | select(.prerelease == false) | .tag_name' | head -n1 || true)
+
             if [ -n "$PREV_RELEASE_TAG" ]; then
               RAW_COMMITS=$(git log --pretty=format:%s "${PREV_RELEASE_TAG}"..HEAD)
             else
@@ -158,6 +139,7 @@ jobs:
           echo "changelog<<EOF" >> $GITHUB_OUTPUT
           printf "%s\n" "$BODY" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
+
 
       - name: Build zip package
         if: steps.extract.outputs.changed == 'true'
