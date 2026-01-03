@@ -154,7 +154,7 @@ end
 
 -- Main event handler - routes events to specific handlers
 function M.OnEvent(event, ...)
-    ns.config.DebugPrint("Event received: " .. event)
+    --ns.config.DebugPrint("Event received: " .. event)
 
     if event == "COMBAT_LOG_EVENT_UNFILTERED" then
         OnCombatLogEventUnfiltered()
