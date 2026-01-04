@@ -17,7 +17,7 @@ end
 -- Function to push to the array and schedule delayed cleanup
 function M.AddToHistory(name)
     table.insert(history, name)
-    C_Timer.After(20, Cleanup)
+    C_Timer.After(5, Cleanup)
 end
 
 -- Function to check if a name is in the history array
