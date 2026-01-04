@@ -124,7 +124,7 @@ local function OnUnitHealthFrequent(unit)
     ns.hardcore.AddToDeathLog(unitName)
 
     if ns.config.Get("debugMode") then
-        ns.config.DebugPrint(unitName .. " has died (from UNIT_HEALTH_FREQUENT event)")
+        ns.config.DebugPrint(unitName .. " has died (UNIT_HEALTH_FREQUENT)")
     end
 end
 
@@ -148,26 +148,20 @@ local function OnCombatLogEventUnfiltered()
     ns.hardcore.AddToDeathLog(destName)
 
     if ns.config.Get("debugMode") then
-        ns.config.DebugPrint(destName .. " has died (from UNIT_DIED event in COMBAT_LOG_EVENT_UNFILTERED)")
+        ns.config.DebugPrint(destName .. " has died (COMBAT_LOG_EVENT_UNFILTERED)")
     end
 end
 
 -- Main event handler - routes events to specific handlers
 function M.OnEvent(event, ...)
-    --ns.config.DebugPrint("Event received: " .. event)
-
     if event == "COMBAT_LOG_EVENT_UNFILTERED" then
         OnCombatLogEventUnfiltered()
     elseif event == "UNIT_HEALTH_FREQUENT" then
         OnUnitHealthFrequent(...)
-        --elseif event == "UNIT_SPELLCAST_CHANNEL_START" then
-        --OnUnitSpellcastChannelStart(...)
     elseif event == "UNIT_SPELLCAST_START" then
         OnUnitSpellcastChannelStart(...)
     elseif event == "CHAT_MSG_SYSTEM" then
         OnMsgSystem(event, ...)
-        --elseif event == "PLAYER_ENTERING_WORLD" then
-        --OnPlayerEnteringWorld()
     end
     -- Add more event routing as needed
 end
