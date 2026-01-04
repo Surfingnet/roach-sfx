@@ -45,7 +45,7 @@ function M.PlayRandomRoachSound()
 
     -- Check cooldown to prevent spam
     local currentTime = GetTime()
-    local cooldown = ns.config.Get("cooldownTime") or 3
+    local cooldown = ns.config.Get("cooldownTime") or 2
     if currentTime - lastPlayedTime < cooldown then
         return -- Still on cooldown
     end
