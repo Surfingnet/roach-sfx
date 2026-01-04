@@ -83,12 +83,15 @@ jobs:
 
       - name: Build changelog from commits since previous tag
         id: build_changelog
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
 
           # new tag created earlier
           NEW_TAG="${{ steps.extract.outputs.tag_name }}"
           PRERELEASE="${{ steps.extract.outputs.prerelease }}"
+          RAW_COMMITS=""
 
           # Helper: find previous tag (exclude NEW_TAG). If none, use recent history.
           find_prev_tag() {
@@ -98,32 +101,34 @@ jobs:
             printf "%s" "$prev"
           }
 
-          RAW_COMMITS=""
-
           if [ "${PRERELEASE}" = "true" ]; then
-            # Alpha: keep previous behaviour => commits since previous tag
+            # Alpha: commits since previous tag (same behaviour as before)
             PREV_TAG=$(find_prev_tag)
             if [ -n "$PREV_TAG" ]; then
-              RAW_COMMITS=$(git log --pretty=format:%s "${PREV_TAG}"..HEAD)
+              RAW_COMMITS=$(git log --pretty=format:%s "${PREV_TAG}"..HEAD || true)
             else
-              RAW_COMMITS=$(git log --pretty=format:%s -n 50 HEAD)
+              RAW_COMMITS=$(git log --pretty=format:%s -n 50 HEAD || true)
             fi
           else
             # Release (stable or beta): try to find last non-prerelease GitHub release tag
             API_URL="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases?per_page=100"
 
-            # Fetch releases JSON and extract the first non-prerelease tag that is not NEW_TAG
-            PREV_RELEASE_TAG=$(curl -sS "${API_URL}" || true | jq -r --arg newtag "$NEW_TAG" '.[] | select(.tag_name != $newtag) | select(.prerelease == false) | .tag_name' | head -n1 || true)
+            # Use authenticated request to avoid HTML/rate-limit responses
+            PREV_RELEASE_TAG=$(curl -sS -H "Accept: application/vnd.github+json" -H "Authorization: token ${GITHUB_TOKEN}" "${API_URL}" \
+              | jq -r --arg newtag "$NEW_TAG" '.[] | select(.tag_name != $newtag) | select(.prerelease == false) | .tag_name' \
+              | head -n1 || true)
 
             if [ -n "$PREV_RELEASE_TAG" ]; then
-              RAW_COMMITS=$(git log --pretty=format:%s "${PREV_RELEASE_TAG}"..HEAD)
-            else
-              # fallback: use previous tag logic (same as alpha case)
+              RAW_COMMITS=$(git log --pretty=format:%s "${PREV_RELEASE_TAG}"..HEAD || true)
+            fi
+
+            # If we still have nothing (API returned nothing or no prior non-prerelease), fallback to previous tag
+            if [ -z "${RAW_COMMITS}" ]; then
               PREV_TAG=$(find_prev_tag)
               if [ -n "$PREV_TAG" ]; then
-                RAW_COMMITS=$(git log --pretty=format:%s "${PREV_TAG}"..HEAD)
+                RAW_COMMITS=$(git log --pretty=format:%s "${PREV_TAG}"..HEAD || true)
               else
-                RAW_COMMITS=$(git log --pretty=format:%s -n 50 HEAD)
+                RAW_COMMITS=$(git log --pretty=format:%s -n 50 HEAD || true)
               fi
             fi
           fi
@@ -139,7 +144,6 @@ jobs:
           echo "changelog<<EOF" >> $GITHUB_OUTPUT
           printf "%s\n" "$BODY" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-
 
       - name: Build zip package
         if: steps.extract.outputs.changed == 'true'
