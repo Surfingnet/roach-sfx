@@ -40,7 +40,7 @@ local function CrossEventChecks()
 end
 
 ---@diagnostic disable-next-line: unused-local
-local function OnUnitSpellcastChannelStart(unitTarget, _castGUID, spellID)
+local function OnUnitSpellcastStart(unitTarget, _castGUID, spellID)
     ns.config.DebugPrint(unitTarget .. " " .. tostring(spellID))
 
     -- Handle teleportation spells cast by group members as potential roaching
@@ -159,7 +159,7 @@ function M.OnEvent(event, ...)
     elseif event == "UNIT_HEALTH_FREQUENT" then
         OnUnitHealthFrequent(...)
     elseif event == "UNIT_SPELLCAST_START" then
-        OnUnitSpellcastChannelStart(...)
+        OnUnitSpellcastStart(...)
     elseif event == "CHAT_MSG_SYSTEM" then
         OnMsgSystem(event, ...)
     end
