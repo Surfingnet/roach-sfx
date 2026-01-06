@@ -7,11 +7,11 @@ local M = ns.instance
 ---Returns true if the player is in a PvE instance (dungeon or raid), otherwise false.
 ---@return boolean
 function M.IsPlayerInPvEInstance()
-  local inInstance, instanceType = IsInInstance()
-  if not inInstance then
+  local in_instance, instance_type = IsInInstance()
+  if not in_instance then
     return false
   end
-  return instanceType == "party" or instanceType == "raid"
+  return instance_type == "party" or instance_type == "raid"
 end
 
 ns.instance = M

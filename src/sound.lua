@@ -13,7 +13,7 @@ local channels = {
 }
 
 -- List of available sound files (add new .ogg files here)
-local soundFiles = {
+local SOUND_FILES = {
     "do_you_see_my_mana.ogg",
     "what_am_i_supposed_to_do.ogg",
     "why_am_i_walking.ogg",
@@ -28,72 +28,72 @@ local soundFiles = {
     -- Add more sound files as needed
 }
 
-local soundFilesCt = #soundFiles
+local SOUND_FILES_CT = #SOUND_FILES
 
 -- To avoid repeating
-local lastPlayedIndex = 0
+local last_played_index = 0
 
 -- Cooldown tracking
-local lastPlayedTime = 0
+local last_played_time = 0
 
 -- Play a random roach sound
 function M.PlayRandomRoachSound()
-    if soundFilesCt == 0 then return end
+    if SOUND_FILES_CT == 0 then return end
 
     -- Check if sounds are enabled
     if not ns.config.Get("enableSounds") then return end
 
     -- Check cooldown to prevent spam
-    local currentTime = GetTime()
+    local current_time = GetTime()
     local cooldown = ns.config.Get("cooldownTime") or 2
-    if currentTime - lastPlayedTime < cooldown then
+    if current_time - last_played_time < cooldown then
         return -- Still on cooldown
     end
 
-    local randomIndex = fastrandom(soundFilesCt)
+    local random_index = fastrandom(SOUND_FILES_CT)
 
-    while (randomIndex == lastPlayedIndex) do
-        randomIndex = fastrandom(soundFilesCt)
+    while (random_index == last_played_index) do
+        random_index = fastrandom(SOUND_FILES_CT)
     end
 
-    local soundFile = soundFiles[randomIndex]
-    local soundPath = "Interface\\AddOns\\roach-sfx\\sounds\\" .. soundFile
+    local sound_file = SOUND_FILES[random_index]
+    local sound_path = "Interface\\AddOns\\roach-sfx\\sounds\\" .. sound_file
 
     -- Get sound channel from config
     local channel = channels[ns.config.Get("soundChannel")]
 
     -- Play the sound
-    PlaySoundFile(soundPath, channel)
+    PlaySoundFile(sound_path, channel)
 
     -- Update last played time
-    lastPlayedTime = currentTime
+    last_played_time = current_time
 
     -- Update last played index
-    lastPlayedIndex = randomIndex
+    last_played_index = random_index
 end
 
 function M.PlayFunnySoundIn()
-    local soundFile = "TADA.ogg"
-    local soundPath = "Interface\\AddOns\\roach-sfx\\sounds\\" .. soundFile
-    PlaySoundFile(soundPath, "Master")
+    local sound_file = "TADA.ogg"
+    local sound_path = "Interface\\AddOns\\roach-sfx\\sounds\\" .. sound_file
+    PlaySoundFile(sound_path, "Master")
 end
 
 function M.PlayFunnySoundOut()
-    local soundFile = "sad_crowd_aww.ogg"
-    local soundPath = "Interface\\AddOns\\roach-sfx\\sounds\\" .. soundFile
-    PlaySoundFile(soundPath, "Master")
+    local sound_file = "sad_crowd_aww.ogg"
+    local sound_path = "Interface\\AddOns\\roach-sfx\\sounds\\" .. sound_file
+    PlaySoundFile(sound_path, "Master")
 end
 
 -- Absolute requirement
-local function OneInAMillion()
+local function oneInAMillion()
     local chance = fastrandom(1000000)
     if chance == 69420 then
-        local soundFile = "not_rick_roll_trust_me.ogg"
-        local soundPath = "Interface\\AddOns\\roach-sfx\\sounds\\" .. soundFile
-        PlaySoundFile(soundPath, "Master")
+        local sound_file = "not_rick_roll_trust_me.ogg"
+        local sound_path = "Interface\\AddOns\\roach-sfx\\sounds\\" .. sound_file
+        PlaySoundFile(sound_path, "Master")
     end
 end
 
-OneInAMillion() -- Never delete this line, very important
+oneInAMillion() -- Never delete this line, very important
 
 ns.sound = M

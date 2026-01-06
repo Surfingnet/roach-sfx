@@ -5,70 +5,70 @@ ns.chat_parser = ns.chat_parser or {}
 local M = ns.chat_parser
 
 -- Constructs a secure Lua pattern for Blizzard strings containing "%s"
-local function MakeNamePattern(formatString)
-    local PH = "<<<PLAYERNAME>>>"
-    local s = formatString
+local function makeNamePattern(format_string)
+    local placeholder = "<<<PLAYERNAME>>>"
+    local s = format_string
 
     -- handle positional specifiers like %1$s, %2$s, ...
-    s = s:gsub("%%(%d+)%$s", PH)
+    s = s:gsub("%%(%d+)%$s", placeholder)
     -- handle simple %s
-    s = s:gsub("%%s", PH)
+    s = s:gsub("%%s", placeholder)
 
     -- escape magic characters for Lua patterns
     s = s:gsub("([%^%$%(%)%%.%[%]%*%+%-%?])", "%%%1")
 
     -- allow any characters (including spaces / multibyte) for the captured name
-    s = s:gsub(PH, "(.+)")
+    s = s:gsub(placeholder, "(.+)")
 
     return "^" .. s .. "$"
 end
 
 -- Constructs an exact pattern (no captures) for a given string
-local function MakeExactPattern(formatString)
-    local s = formatString
+local function makeExactPattern(format_string)
+    local s = format_string
     s = s:gsub("([%^%$%(%)%%.%[%]%*%+%-%?])", "%%%1")
     return "^" .. s .. "$"
 end
 
 -- trim leading/trailing spaces just in case
-local function TrimSpaces(name)
+local function trimSpaces(name)
     return name:match("^%s*(.-)%s*$")
 end
 
 -- List of constants (only these will be used)
-local leaverConsts = { -- messages indicating that somebody has left
+local LEAVERS_CONSTS = { -- messages indicating that somebody has left
     "ERR_RAID_MEMBER_REMOVED_S",--ok
     "ERR_LEFT_GROUP_S",--ok
 }
-local selfConsts = { -- messages indicating that the client has left
+local SELF_CONSTS = { -- messages indicating that the client has left
     "ERR_RAID_YOU_LEFT",--ok
     "ERR_LEFT_GROUP_YOU",--ok
 }
-local disbandConsts = { -- messages indicating that the group has been disbanded
+local DISBAND_CONSTS = { -- messages indicating that the group has been disbanded
     "ERR_GROUP_DISBANDED",--ok
 }
 
-local leaverPatterns = {}
-for _, cname in ipairs(leaverConsts) do
+local leaver_patterns = {}
+for _, cname in ipairs(LEAVERS_CONSTS) do
     local val = _G[cname]
     if type(val) == "string" then
-        table.insert(leaverPatterns, MakeNamePattern(val))
+        table.insert(leaver_patterns, makeNamePattern(val))
     end
 end
 
-local selfPatterns = {}
-for _, cname in ipairs(selfConsts) do
+local self_patterns = {}
+for _, cname in ipairs(SELF_CONSTS) do
     local val = _G[cname]
     if type(val) == "string" then
-        table.insert(selfPatterns, MakeExactPattern(val))
+        table.insert(self_patterns, makeExactPattern(val))
     end
 end
 
-local disbandPatterns = {}
-for _, cname in ipairs(disbandConsts) do
+local disband_patterns = {}
+for _, cname in ipairs(DISBAND_CONSTS) do
     local val = _G[cname]
     if type(val) == "string" then
-        table.insert(disbandPatterns, MakeExactPattern(val))
+        table.insert(disband_patterns, makeExactPattern(val))
     end
 end
 
@@ -76,10 +76,10 @@ end
 function M.DetectLeaverFromSystem(event, msg, ...)
     if event ~= "CHAT_MSG_SYSTEM" then return end
     if not msg or msg == "" then return end
-    for _, pat in ipairs(leaverPatterns) do
+    for _, pat in ipairs(leaver_patterns) do
         local name = msg:match(pat)
         if name and name ~= "" then
-            return TrimSpaces(name)
+            return trimSpaces(name)
         end
     end
 end
@@ -89,12 +89,12 @@ end
 function M.DetectSelfOrDisband(event, msg, ...)
     if event ~= "CHAT_MSG_SYSTEM" then return end
     if not msg or msg == "" then return end
-    for _, pat in ipairs(disbandPatterns) do
+    for _, pat in ipairs(disband_patterns) do
         if msg:match(pat) then
             return "disband"
         end
     end
-    for _, pat in ipairs(selfPatterns) do
+    for _, pat in ipairs(self_patterns) do
         if msg:match(pat) then
             return "self"
         end

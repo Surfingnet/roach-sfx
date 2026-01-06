@@ -4,7 +4,7 @@ ns = ns or {}
 ns.message = ns.message or {}
 local M = ns.message
 
-local roachQuotes = {
+local ROACH_QUOTES = {
     "XYZ is a coward",
     "XYZ roached out!",
     "XYZ used to work at Blizzard",
@@ -28,18 +28,18 @@ local roachQuotes = {
     -- TODO, more funny quotes for roaching
 }
 
-local roachQuotesCt = #roachQuotes
+local ROACH_QUOTES_CT = #ROACH_QUOTES
 
 -- Local function to strip server from name
-local function StripServer(name)
+local function stripServer(name)
     return name:match("^[^-]+") or name
 end
 
 ---Get a random roach message with the player's name inserted.
 ---@param name string The name to insert
 ---@return string
-local function GetRandomRoachMessage(name)
-    local quote = roachQuotes[fastrandom(roachQuotesCt)]
+local function getRandomRoachMessage(name)
+    local quote = ROACH_QUOTES[fastrandom(ROACH_QUOTES_CT)]
     local result = string.gsub(quote, "XYZ", name) -- Replace placeholder with player name
     return result
 end
@@ -48,8 +48,8 @@ end
 ---@param name string The name of the player who roached
 function M.ShowRoachWarning(name)
     if not ns.config.Get("showRaidWarnings") then return end
-    local displayName = ns.config.Get("stripServer") and StripServer(name) or name
-    local message = GetRandomRoachMessage(displayName)
+    local displayName = ns.config.Get("stripServer") and stripServer(name) or name
+    local message = getRandomRoachMessage(displayName)
     ---@diagnostic disable-next-line: undefined-global
     RaidNotice_AddMessage(RaidWarningFrame, message, ChatTypeInfo["RAID_WARNING"])
 end

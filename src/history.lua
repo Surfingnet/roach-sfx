@@ -8,7 +8,7 @@ local M = ns.history
 local history = {}
 
 -- Local cleanup function to remove the oldest entry
-local function Cleanup()
+local function cleanup()
     if #history > 0 then
         table.remove(history, 1)
     end
@@ -17,7 +17,7 @@ end
 -- Function to push to the array and schedule delayed cleanup
 function M.AddToHistory(name)
     table.insert(history, name)
-    C_Timer.After(5, Cleanup)
+    C_Timer.After(5, cleanup)
 end
 
 -- Function to check if a name is in the history array
@@ -30,7 +30,7 @@ function M.IsInHistory(name)
     return false
 end
 
-function M.clearHistory()
+function M.ClearHistory()
     history = {}
 end
 

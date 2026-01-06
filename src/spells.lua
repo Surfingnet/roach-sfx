@@ -4,8 +4,8 @@ ns = ns or {}
 ns.spells = ns.spells or {}
 local M = ns.spells
 
-
-local teleportationSpellIDs = {
+-- Dictionary of teleportation spell IDs
+local TP_SPELL_IDS = {
     [8690] = true,  --  Hearthstone DONE
     [556] = true,   --  Astral Recall DONE
     [18960] = true, --  Teleport: Moonglade DONE
@@ -18,6 +18,7 @@ local teleportationSpellIDs = {
     [23453] = true, --  Gnomish Transporter DONE
 }
 
+-- Dictionary of teleportation spell names in every client languages
 local teleportationSpellNames = {
     ["Ruhestein"] = true,
     ["Hearthstone"] = true,
@@ -114,8 +115,8 @@ local teleportationSpellNames = {
     ["地精傳送器"] = true,
 }
 ---Returns true if the given spell name is a teleportation spell.
-function M.isTeleportationSpell(spellID)
-    return spellID and teleportationSpellIDs[spellID] or false
+function M.isTeleportationSpell(spell_id)
+    return spell_id and TP_SPELL_IDS[spell_id] or false
 end
 
 ns.spells = M
