@@ -8,7 +8,7 @@ local M = ns.hardcore
 local deathLog = {}
 
 -- Function to push to the array
-function M.AddToHistory(name)
+function M.AddToDeathLog(name)
     table.insert(deathLog, name)
     --C_Timer.After(20, Cleanup)
 end
