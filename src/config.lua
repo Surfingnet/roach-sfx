@@ -5,6 +5,7 @@ ns.config = ns.config or {}
 local M = ns.config
 
 -- Setup default values if not already present
+-- Do not change the style of it. I know it's camelCase.. whatever.. too late now.
 local DEFAULTS = {
     soundChannel = 1, -- 1=Master, 2=SFX, 3=Music, 4=Ambience, 5=Dialog
     cooldownTime = 2, -- Default cooldown between sounds (seconds)
@@ -18,7 +19,7 @@ local DEFAULTS = {
 }
 
 -- Get setting value from SavedVariables (kept for other modules)
-function M.Get(key)
+function M.get(key)
     if not RoachSFXDB then
         return DEFAULTS[key]
     end
@@ -27,14 +28,14 @@ function M.Get(key)
 end
 
 -- Debug print function
-function M.DebugPrint(message)
-    if M.Get("debugMode") then
+function M.debug_print(message)
+    if M.get("debugMode") then
         print("RoachSFX Debug: " .. message)
     end
 end
 
 -- Initialize SavedVariables and apply defaults (call this after login / delay)
-local function initializeSavedVars()
+local function initialize_saved_vars()
     RoachSFXDB = RoachSFXDB or {}
     for k, v in pairs(DEFAULTS) do
         if RoachSFXDB[k] == nil then
@@ -43,14 +44,14 @@ local function initializeSavedVars()
     end
 end
 
-local function buildSettingsCategory()
+local function build_settings_category()
     -- Callback when a setting value is changed
     local function onSettingChanged(setting, value)
         -- setting:GetVariable() returns the variable_key passed when registering the setting
         local variable = setting:GetVariable()
         RoachSFXDB[variable] = value
         if RoachSFXDB.debugMode then
-            M.DebugPrint(variable .. " changed to " .. tostring(value))
+            M.debug_print(variable .. " changed to " .. tostring(value))
         end
     end
 
@@ -60,7 +61,7 @@ local function buildSettingsCategory()
 
     -- Helper: register a simple addon-backed setting (saves directly into RoachSFXDB)
     -- Note: registerAddOnSetting signature requires variable_key and variableTbl (the SavedVariables table)
-    local function registerSimpleSetting(category, variable_key, display_name, value_type, default_value)
+    local function register_simple_setting(category, variable_key, display_name, value_type, default_value)
         local setting = Settings.RegisterAddOnSetting(
             category,    -- category
             variable_key, -- variable (unique setting id)
@@ -81,7 +82,7 @@ local function buildSettingsCategory()
         local tooltip = "Select which sound channel to use."
         local default_value = RoachSFXDB.soundChannel
 
-        local function getChannelOptions()
+        local function get_channel_options()
             -- Settings.CreateControlTextContainer is used to provide dropdown entries.
             local container = Settings.CreateControlTextContainer()
             container:Add(1, "Master")
@@ -92,11 +93,11 @@ local function buildSettingsCategory()
             return container:GetData()
         end
 
-        local setting = registerSimpleSetting(category, variable, name, type(default_value), default_value)
+        local setting = register_simple_setting(category, variable, name, type(default_value), default_value)
 
         -- IMPORTANT: correct function name is CreateDropdown (not CreateDropDown).
         -- This creates a dropdown control bound to the registered setting.
-        Settings.CreateDropdown(category, setting, getChannelOptions, tooltip)
+        Settings.CreateDropdown(category, setting, get_channel_options, tooltip)
     end
 
     -- Cooldown Time (Slider)
@@ -106,7 +107,7 @@ local function buildSettingsCategory()
         local tooltip = "Set the cooldown time (in seconds) between sounds."
         local default_value = RoachSFXDB.cooldownTime
 
-        local setting = registerSimpleSetting(category, variable, name, type(default_value), default_value)
+        local setting = register_simple_setting(category, variable, name, type(default_value), default_value)
 
         -- Slider options: min, max, step
         local options = Settings.CreateSliderOptions(1, 10, 1)
@@ -123,7 +124,7 @@ local function buildSettingsCategory()
         local tooltip = "Allow effects outside of dungeons and raids."
         local default_value = RoachSFXDB.enableOutsideInstances
 
-        local setting = registerSimpleSetting(category, variable, name, type(default_value), default_value)
+        local setting = register_simple_setting(category, variable, name, type(default_value), default_value)
         Settings.CreateCheckbox(category, setting, tooltip)
     end
 
@@ -134,7 +135,7 @@ local function buildSettingsCategory()
         local tooltip = "Enable display of raid warning type messages."
         local default_value = RoachSFXDB.showRaidWarnings
 
-        local setting = registerSimpleSetting(category, variable, name, type(default_value), default_value)
+        local setting = register_simple_setting(category, variable, name, type(default_value), default_value)
         Settings.CreateCheckbox(category, setting, tooltip)
     end
 
@@ -145,7 +146,7 @@ local function buildSettingsCategory()
         local tooltip = "Toggle all sound effects on or off."
         local default_value = RoachSFXDB.enableSounds
 
-        local setting = registerSimpleSetting(category, variable, name, type(default_value), default_value)
+        local setting = register_simple_setting(category, variable, name, type(default_value), default_value)
         Settings.CreateCheckbox(category, setting, tooltip)
     end
 
@@ -156,7 +157,7 @@ local function buildSettingsCategory()
         local tooltip = "Be notified of your own cowardice."
         local default_value = RoachSFXDB.allowPlayer
 
-        local setting = registerSimpleSetting(category, variable, name, type(default_value), default_value)
+        local setting = register_simple_setting(category, variable, name, type(default_value), default_value)
         Settings.CreateCheckbox(category, setting, tooltip)
     end
 
@@ -167,7 +168,7 @@ local function buildSettingsCategory()
         local tooltip = "No server name in messages."
         local default_value = RoachSFXDB.stripServer
 
-        local setting = registerSimpleSetting(category, variable, name, type(default_value), default_value)
+        local setting = register_simple_setting(category, variable, name, type(default_value), default_value)
         Settings.CreateCheckbox(category, setting, tooltip)
     end
 
@@ -178,7 +179,7 @@ local function buildSettingsCategory()
         local tooltip = "Are you in a hardcore realm?"
         local default_value = RoachSFXDB.hardcore
 
-        local setting = registerSimpleSetting(category, variable, name, type(default_value), default_value)
+        local setting = register_simple_setting(category, variable, name, type(default_value), default_value)
         Settings.CreateCheckbox(category, setting, tooltip)
     end
 
@@ -189,7 +190,7 @@ local function buildSettingsCategory()
         local tooltip = "Spam your chat with useless stuff. Why not?"
         local default_value = RoachSFXDB.debugMode
 
-        local setting = registerSimpleSetting(category, variable, name, type(default_value), default_value)
+        local setting = register_simple_setting(category, variable, name, type(default_value), default_value)
         Settings.CreateCheckbox(category, setting, tooltip)
     end
 
@@ -201,25 +202,25 @@ local function buildSettingsCategory()
         local default_value = false
 
         -- GetValue always returns false so the control never stores state.
-        local function getValue()
+        local function get_value()
             return false
         end
 
         -- SetValue is called when the user toggles the checkbox.
         -- We run the demo action if present. No persistent storage.
-        local function setValue(value)
+        local function set_value(value)
             if value then
-                M.DebugPrint("Demo button clicked. Hooray!")
-                ns.message.ShowRoachWarning(UnitName("player"))
-                ns.sound.PlayRandomRoachSound()
+                M.debug_print("Demo button clicked. Hooray!")
+                ns.message.show_roach_warning(UnitName("player"))
+                ns.sound.play_random_roach_sound()
             end
             -- Do not store anything; GetValue returning false ensures UI resets.
         end
 
         -- Register a proxy setting (no variableTbl needed)
         local setting = Settings.RegisterProxySetting(category, variable, type(default_value), name, default_value,
-            getValue,
-            setValue)
+            get_value,
+            set_value)
         -- Use a checkbox as a momentary 'button'
         Settings.CreateCheckbox(category, setting, tooltip)
     end
@@ -234,28 +235,28 @@ local function buildSettingsCategory()
         local funny_button_state = false
 
         -- GetValue always returns false so the control never stores state.
-        local function getValue()
+        local function get_value()
             return funny_button_state
         end
 
         -- SetValue is called when the user toggles the checkbox.
         -- We run the demo action if present. No persistent storage.
-        local function setValue(value)
+        local function set_value(value)
             funny_button_state = value
             if value then
-                M.DebugPrint("Funny button clicked. Hooray!")
-                ns.sound.PlayFunnySoundIn()
+                M.debug_print("Funny button clicked. Hooray!")
+                ns.sound.play_funny_sound_in()
             else
-                M.DebugPrint("Funny button unclicked...")
-                ns.sound.PlayFunnySoundOut()
+                M.debug_print("Funny button unclicked...")
+                ns.sound.play_funny_sound_out()
             end
             -- Do not store anything; getValue returning false ensures UI resets.
         end
 
         -- Register a proxy setting (no variableTbl needed)
         local setting = Settings.RegisterProxySetting(category, variable, type(default_value), name, default_value,
-            getValue,
-            setValue)
+            get_value,
+            set_value)
         -- Use a checkbox as a momentary 'button'
         Settings.CreateCheckbox(category, setting, tooltip)
     end
@@ -269,8 +270,8 @@ local evt = CreateFrame("Frame")
 evt:RegisterEvent("PLAYER_LOGIN")
 evt:SetScript("OnEvent", function(self, event, ...)
     if event == "PLAYER_LOGIN" then
-        initializeSavedVars()
-        buildSettingsCategory()
+        initialize_saved_vars()
+        build_settings_category()
         self:UnregisterEvent("PLAYER_LOGIN")
         M.ready = true
     end

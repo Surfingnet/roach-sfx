@@ -7,7 +7,7 @@ local M = ns.roster
 ---Check if a unit is currently in the group (party/raid)
 ---@param unit string The unit ID to check
 ---@return boolean
-function M.IsUnitInGroup(unit)
+function M.is_unit_in_group(unit)
   if not unit then return false end
 
   if IsInRaid() then
@@ -17,7 +17,7 @@ function M.IsUnitInGroup(unit)
   end
 end
 
-function M.IsGUIDInGroup(guid)
+function M.is_guid_in_group(guid)
   local group_size = GetNumGroupMembers() or 0
   if group_size == 0 then
     return false

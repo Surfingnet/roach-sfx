@@ -37,15 +37,15 @@ local last_played_index = 0
 local last_played_time = 0
 
 -- Play a random roach sound
-function M.PlayRandomRoachSound()
+function M.play_random_roach_sound()
     if SOUND_FILES_CT == 0 then return end
 
     -- Check if sounds are enabled
-    if not ns.config.Get("enableSounds") then return end
+    if not ns.config.get("enableSounds") then return end
 
     -- Check cooldown to prevent spam
     local current_time = GetTime()
-    local cooldown = ns.config.Get("cooldownTime") or 2
+    local cooldown = ns.config.get("cooldownTime") or 2
     if current_time - last_played_time < cooldown then
         return -- Still on cooldown
     end
@@ -60,7 +60,7 @@ function M.PlayRandomRoachSound()
     local sound_path = "Interface\\AddOns\\roach-sfx\\sounds\\" .. sound_file
 
     -- Get sound channel from config
-    local channel = channels[ns.config.Get("soundChannel")]
+    local channel = channels[ns.config.get("soundChannel")]
 
     -- Play the sound
     PlaySoundFile(sound_path, channel)
@@ -72,20 +72,20 @@ function M.PlayRandomRoachSound()
     last_played_index = random_index
 end
 
-function M.PlayFunnySoundIn()
+function M.play_funny_sound_in()
     local sound_file = "TADA.ogg"
     local sound_path = "Interface\\AddOns\\roach-sfx\\sounds\\" .. sound_file
     PlaySoundFile(sound_path, "Master")
 end
 
-function M.PlayFunnySoundOut()
+function M.play_funny_sound_out()
     local sound_file = "sad_crowd_aww.ogg"
     local sound_path = "Interface\\AddOns\\roach-sfx\\sounds\\" .. sound_file
     PlaySoundFile(sound_path, "Master")
 end
 
 -- Absolute requirement
-local function oneInAMillion()
+local function one_in_a_million()
     local chance = fastrandom(1000000)
     if chance == 69420 then
         local sound_file = "not_rick_roll_trust_me.ogg"
@@ -94,6 +94,6 @@ local function oneInAMillion()
     end
 end
 
-oneInAMillion() -- Never delete this line, very important
+one_in_a_million() -- Never delete this line, very important
 
 ns.sound = M

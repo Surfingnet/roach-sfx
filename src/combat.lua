@@ -6,7 +6,7 @@ local M = ns.combat
 
 ---Returns true if at least one group member (or the player) is in combat.
 ---@return boolean
-function M.IsAnyGroupMemberInCombat()
+function M.is_group_in_combat()
   -- Check if any group member is in combat
   if UnitAffectingCombat("player") then
     return true

@@ -17,9 +17,8 @@ local TP_SPELL_IDS = {
     [3567] = true,  --  Teleport: Orgrimmar DONE
     [23453] = true, --  Gnomish Transporter DONE
 }
-
 -- Dictionary of teleportation spell names in every client languages
-local teleportationSpellNames = {
+local TP_SPELL_NAMES = {
     ["Ruhestein"] = true,
     ["Hearthstone"] = true,
     ["Descorazonado"] = true,
@@ -115,7 +114,7 @@ local teleportationSpellNames = {
     ["地精傳送器"] = true,
 }
 ---Returns true if the given spell name is a teleportation spell.
-function M.isTeleportationSpell(spell_id)
+function M.is_teleportation_spell(spell_id)
     return spell_id and TP_SPELL_IDS[spell_id] or false
 end
 

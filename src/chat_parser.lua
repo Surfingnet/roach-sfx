@@ -5,7 +5,7 @@ ns.chat_parser = ns.chat_parser or {}
 local M = ns.chat_parser
 
 -- Constructs a secure Lua pattern for Blizzard strings containing "%s"
-local function makeNamePattern(format_string)
+local function make_name_pattern(format_string)
     local placeholder = "<<<PLAYERNAME>>>"
     local s = format_string
 
@@ -24,14 +24,14 @@ local function makeNamePattern(format_string)
 end
 
 -- Constructs an exact pattern (no captures) for a given string
-local function makeExactPattern(format_string)
+local function make_exact_pattern(format_string)
     local s = format_string
     s = s:gsub("([%^%$%(%)%%.%[%]%*%+%-%?])", "%%%1")
     return "^" .. s .. "$"
 end
 
 -- trim leading/trailing spaces just in case
-local function trimSpaces(name)
+local function trim_spaces(name)
     return name:match("^%s*(.-)%s*$")
 end
 
@@ -52,7 +52,7 @@ local leaver_patterns = {}
 for _, cname in ipairs(LEAVERS_CONSTS) do
     local val = _G[cname]
     if type(val) == "string" then
-        table.insert(leaver_patterns, makeNamePattern(val))
+        table.insert(leaver_patterns, make_name_pattern(val))
     end
 end
 
@@ -60,7 +60,7 @@ local self_patterns = {}
 for _, cname in ipairs(SELF_CONSTS) do
     local val = _G[cname]
     if type(val) == "string" then
-        table.insert(self_patterns, makeExactPattern(val))
+        table.insert(self_patterns, make_exact_pattern(val))
     end
 end
 
@@ -68,25 +68,25 @@ local disband_patterns = {}
 for _, cname in ipairs(DISBAND_CONSTS) do
     local val = _G[cname]
     if type(val) == "string" then
-        table.insert(disband_patterns, makeExactPattern(val))
+        table.insert(disband_patterns, make_exact_pattern(val))
     end
 end
 
 -- Returns the name of the leaver (string) if the message corresponds to "X has left the group", otherwise nil
-function M.DetectLeaverFromSystem(event, msg, ...)
+function M.detect_leaver(event, msg, ...)
     if event ~= "CHAT_MSG_SYSTEM" then return end
     if not msg or msg == "" then return end
     for _, pat in ipairs(leaver_patterns) do
         local name = msg:match(pat)
         if name and name ~= "" then
-            return trimSpaces(name)
+            return trim_spaces(name)
         end
     end
 end
 
 -- Detects if the message indicates that the client has left or the group has been disbanded.
 -- Returns "self", "disband", or nil.
-function M.DetectSelfOrDisband(event, msg, ...)
+function M.detect_self_or_disband(event, msg, ...)
     if event ~= "CHAT_MSG_SYSTEM" then return end
     if not msg or msg == "" then return end
     for _, pat in ipairs(disband_patterns) do

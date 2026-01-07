@@ -18,7 +18,7 @@ local function main()
 
     -- Set the OnEvent script to the handler in events.lua
     ns.frame:SetScript("OnEvent", function(self, event, ...)
-        ns.events.OnEvent(event, ...)
+        ns.events.on_event(event, ...)
     end)
 
     -- Register events (add more as needed)
@@ -31,7 +31,7 @@ local function main()
     ns.frame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
     -- Add other events as needed
 
-    ns.config.DebugPrint("RoachSFX loaded. Hooray!")
+    ns.config.debug_print("RoachSFX loaded. Hooray!")
 end
 
 main()

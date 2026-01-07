@@ -15,13 +15,13 @@ local function cleanup()
 end
 
 -- Function to push to the array and schedule delayed cleanup
-function M.AddToHistory(name)
+function M.add_to_history(name)
     table.insert(history, name)
     C_Timer.After(5, cleanup)
 end
 
 -- Function to check if a name is in the history array
-function M.IsInHistory(name)
+function M.is_in_history(name)
     for _, hname in ipairs(history) do
         if hname:lower() == name:lower() then
             return true
@@ -30,7 +30,7 @@ function M.IsInHistory(name)
     return false
 end
 
-function M.ClearHistory()
+function M.clear_history()
     history = {}
 end
 

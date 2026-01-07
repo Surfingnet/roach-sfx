@@ -31,14 +31,14 @@ local ROACH_QUOTES = {
 local ROACH_QUOTES_CT = #ROACH_QUOTES
 
 -- Local function to strip server from name
-local function stripServer(name)
+local function strip_server(name)
     return name:match("^[^-]+") or name
 end
 
 ---Get a random roach message with the player's name inserted.
 ---@param name string The name to insert
 ---@return string
-local function getRandomRoachMessage(name)
+local function get_random_roach_message(name)
     local quote = ROACH_QUOTES[fastrandom(ROACH_QUOTES_CT)]
     local result = string.gsub(quote, "XYZ", name) -- Replace placeholder with player name
     return result
@@ -46,10 +46,10 @@ end
 
 ---Display a raid warning message locally for a player who roached out.
 ---@param name string The name of the player who roached
-function M.ShowRoachWarning(name)
-    if not ns.config.Get("showRaidWarnings") then return end
-    local displayName = ns.config.Get("stripServer") and stripServer(name) or name
-    local message = getRandomRoachMessage(displayName)
+function M.show_roach_warning(name)
+    if not ns.config.get("showRaidWarnings") then return end
+    local display_name = ns.config.get("stripServer") and strip_server(name) or name
+    local message = get_random_roach_message(display_name)
     ---@diagnostic disable-next-line: undefined-global
     RaidNotice_AddMessage(RaidWarningFrame, message, ChatTypeInfo["RAID_WARNING"])
 end
