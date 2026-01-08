@@ -113,7 +113,7 @@ local TP_SPELL_NAMES = {
     ["侏儒传送器"] = true,
     ["地精傳送器"] = true,
 }
----Returns true if the given spell name is a teleportation spell.
+---Returns true if the given spell ID is a teleportation spell.
 function M.is_teleportation_spell(spell_id)
     return spell_id and TP_SPELL_IDS[spell_id] or false
 end
