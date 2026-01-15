@@ -25,6 +25,7 @@ local SOUND_FILES = {
     "terminator_2_hasta_la_vista_baby.ogg",
     "danger.ogg",
     "i_leave_you_guys.ogg",
+    "trump_bye_bye.ogg",
     -- Add more sound files as needed
 }
 
