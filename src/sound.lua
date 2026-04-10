@@ -53,8 +53,8 @@ function M.play_random_roach_sound()
 
     local random_index = fastrandom(SOUND_FILES_CT)
 
-    while (random_index == last_played_index) do
-        random_index = fastrandom(SOUND_FILES_CT)
+    if (random_index == last_played_index) then
+        random_index = (random_index + 1) % SOUND_FILES_CT
     end
 
     local sound_file = SOUND_FILES[random_index]
