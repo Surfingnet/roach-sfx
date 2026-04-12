@@ -8,7 +8,7 @@ local M = ns.config
 -- Do not change the style of it. I know it's camelCase.. whatever.. too late now.
 local DEFAULTS = {
     soundChannel = 1, -- 1=Master, 2=SFX, 3=Music, 4=Ambience, 5=Dialog
-    cooldownTime = 2, -- Default cooldown between sounds (seconds)
+    cooldownTime = 3, -- Default cooldown between sounds (seconds)
     enableOutsideInstances = false,
     showRaidWarnings = false,
     enableSounds = true,
