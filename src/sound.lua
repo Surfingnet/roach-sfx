@@ -26,6 +26,8 @@ local SOUND_FILES = {
     "danger.ogg",
     "i_leave_you_guys.ogg",
     "trump_bye_bye.ogg",
+    "we_must_retreat.ogg",
+    "portal_turret_goodbye.ogg",
     -- Add more sound files as needed
 }
 
