@@ -131,8 +131,8 @@ local function build_settings_category()
     -- Show Raid Warnings (Checkbox)
     do
         local variable = "showRaidWarnings"
-        local name = "Show the roacher's name"
-        local tooltip = "Enable display of raid warning type messages."
+        local name = "Enable Raid Warnings"
+        local tooltip = "Show the roacher's name!"
         local default_value = RoachSFXDB.showRaidWarnings
 
         local setting = register_simple_setting(category, variable, name, type(default_value), default_value)
