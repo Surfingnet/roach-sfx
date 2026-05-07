@@ -74,8 +74,8 @@ local function on_msg_system(event, msg, ...)
         if self_or_disband == "disband" then
             ns.config.debug_print("Group disbanded")
             if not common_checks() then return end
-            -- TODO: get the real leader name and remember it
-            handle_roaching("the leader")
+            -- TODO: TESTING THIS -> get the real leader name and remember it
+            handle_roaching(ns.roster.get_party_leader() or "the leader")
             ns.history.clear_history()
             if ns.config.get("hardcore") then
                 ns.hardcore.clear_death_log()
@@ -152,6 +152,14 @@ local function on_combat_log_event_unfiltered()
     end
 end
 
+local function on_group_roster_update()
+    ns.roster.refresh_party_leader()
+end
+
+local function on_player_entering_world()
+    ns.roster.refresh_party_leader()
+end
+
 -- Main event handler - routes events to specific handlers
 function M.on_event(event, ...)
     if event == "COMBAT_LOG_EVENT_UNFILTERED" then
@@ -162,6 +170,10 @@ function M.on_event(event, ...)
         on_unit_spellcast_start(...)
     elseif event == "CHAT_MSG_SYSTEM" then
         on_msg_system(event, ...)
+    elseif event == "GROUP_ROSTER_UPDATE" then
+        on_group_roster_update()
+    elseif event == "PLAYER_ENTERING_WORLD" then
+        on_player_entering_world()
     end
     -- Add more event routing as needed
 end

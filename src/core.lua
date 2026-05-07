@@ -22,13 +22,12 @@ local function main()
     end)
 
     -- Register events (add more as needed)
-    --ns.frame:RegisterEvent("PLAYER_ENTERING_WORLD")
-    --ns.frame:RegisterEvent("GROUP_ROSTER_UPDATE")
-    --ns.frame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START")-- TODO: check if really needed
     ns.frame:RegisterEvent("UNIT_SPELLCAST_START")
     ns.frame:RegisterEvent("CHAT_MSG_SYSTEM")
     ns.frame:RegisterEvent("UNIT_HEALTH_FREQUENT")
     ns.frame:RegisterEvent("COMBAT_LOG_EVENT_UNFILTERED")
+    ns.frame:RegisterEvent("GROUP_ROSTER_UPDATE")
+    ns.frame:RegisterEvent("PLAYER_ENTERING_WORLD")
     -- Add other events as needed
 
     ns.config.debug_print("RoachSFX loaded. Hooray!")
