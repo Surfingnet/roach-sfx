@@ -52,7 +52,7 @@ function M.get_party_leader()
 end
 
 function M.refresh_party_leader()
-  ns.debug_print("Last party leader: " .. (party_leader or ""))
+  ns.config.debug_print("Last party leader: " .. (party_leader or ""))
 
   local group_size = GetNumGroupMembers() or 0
   if group_size == 0 then
@@ -64,21 +64,21 @@ function M.refresh_party_leader()
       local unit = ("raid"..i)
         if UnitExists(unit) and UnitIsGroupLeader(unit) then
             party_leader = UnitName(unit) or party_leader
-            ns.debug_print("New party leader: " .. (party_leader or ""))
+            ns.config.debug_print("New party leader: " .. (party_leader or ""))
             return
         end
     end
   else
     if UnitIsGroupLeader("player") then
       party_leader = UnitName("player") or party_leader
-      ns.debug_print("New party leader: " .. (party_leader or ""))
+      ns.config.debug_print("New party leader: " .. (party_leader or ""))
       return
     end
     for i = 1, GetNumSubgroupMembers() do
       local unit = ("party"..i)
         if UnitExists(unit) and UnitIsGroupLeader(unit) then
             party_leader = UnitName(unit) or party_leader
-            ns.debug_print("New party leader: " .. (party_leader or ""))
+            ns.config.debug_print("New party leader: " .. (party_leader or ""))
             return
         end
     end
